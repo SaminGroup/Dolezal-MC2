@@ -3,6 +3,7 @@
 This is myersion of MC2 inspired by the released version (https://www.nature.com/articles/s41524-019-0259-z), but with the updated acceptance criterion derived
 here (https://ui.adsabs.harvard.edu/abs/2020PhRvE.101f3306A/abstract). MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". Before calling this
 make sure to have the following in the parent directory:
+
         1. data/ directory
         2. potcar/ directory with each species POTCAR file inside labeled {}_POTCAR (i.e. Al_POTCAR, Nb_POTCAR, Ta_POTCAR, etc.)
         3. POSCAR1, POSCAR2, ..., POSCARm with concatenated POTCAR1, POTCAR2,..., POTCARm files
