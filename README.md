@@ -13,5 +13,4 @@ For my work I used Bridges-2 at Pittsburgh Supercomputing Center and AFRL DSRC M
 when calling MC2 on your choice of supercomputer please update the functions "initial_vasp_run()","vasp_run()", and "global_vasp_run()" which are in the myfuncs.py file with
 the proper executable for how VASP is called on your architecture... change the string phrase in the os.system() line of these functions
 
-mc2.py executes the algorithm with no global flips while mc2-global.py does include the global flip. I've generated two versions just in case. I've included INCAR0 and INCAR1 files
-as a sample of how I ran the mc2 algorithm for my research
+mc2.py executes the algorithm with no global flips while mc2-global.py does include the global flip. I've generated two versions just in case. I've included INCAR0 and INCAR1 files as a sample of how I ran the mc2 algorithm for my research. I've also included data_to_csv.py as an example of how I analyzed the MC2 results
