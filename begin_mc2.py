@@ -25,10 +25,10 @@ NOTE: please remember to list all elements alphabetically in the POTCAR file and
 on line 6 in the POSCAR{}_initial file
 """
 
-step_limit = 1000
-Ncells = 3
-T = 300
+step_limit = 2500
+Ncells = 5
+T = 1273
 param = "begin"
-supcomp = "psc"
+supcomp = "mustang"
 
 mc2(step_limit, Ncells, T, param,supcomp)
