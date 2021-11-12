@@ -18,7 +18,7 @@ def mc2(step_limit, Ncells, T, param, supcomp):
 
     cells, names, N = fun.create_cells(Ncells)
     m = Ncells
-    
+
     if param == "begin":
         E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp) # returns two lists, each of len() = m
 
@@ -94,8 +94,8 @@ def mc2(step_limit, Ncells, T, param, supcomp):
         #-----------------------------------------------
         temp_state = copy.deepcopy(initial_state)
 
-        #flip = int(uniform(0,2))
-        flip = 1
+        flip = int(uniform(0,2))
+        
         if flip == 1:
             new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
         else:

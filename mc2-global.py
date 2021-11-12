@@ -98,8 +98,8 @@ def mc2(step_limit, Ncells, T, param, supcomp):
         #-----------------------------------------------
         temp_state = copy.deepcopy(initial_state)
 
-        #flip = int(uniform(0,2))
-        flip = 1
+        flip = int(uniform(0,2))
+        
         if flip == 1:
 
             if singular == 1:
