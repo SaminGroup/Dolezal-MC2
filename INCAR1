@@ -16,6 +16,7 @@ general:
   POTIM = 0.1
   ISYM = 0
   NCORE = 24
-  LREAL = Auto
+  LREAL = Auto # be careful with this setting; access the VASP wiki to
+               # decide if this is optimal for your system
   LWAVE = .FALSE.
   LCHARG = .FALSE.
