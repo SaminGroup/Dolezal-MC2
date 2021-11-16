@@ -3,8 +3,7 @@ general:
   ALGO = Fast # electron optimizaton options
   ISTART = 0 # 1 -- read the WAVECAR, 0 -- rewrite each time
   ICHARG = 2 # take superposition of atomic charge density
-  EDIFF = 1E-04 # stopping criterion for ELM
-  EDIFFG = -1E-02 #stopping criterion for ionic relaxation loop
+  EDIFF = 1E-06 # stopping criterion for ELM
   ENCUT  = 450 # cutoff energy for the plane wave basis set
   ISMEAR = 1 # determines partial occupancies for each orbital
   SIGMA  = 0.2 # width of the smearing in eV
