@@ -5,7 +5,7 @@ import myfuncs as fun
 from random import uniform
 
 
-def mc2(step_limit, Ncells, T, param, supcomp):
+def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
     """
     performs the overall mc2 loop
 
@@ -13,14 +13,14 @@ def mc2(step_limit, Ncells, T, param, supcomp):
     Ncells --> the number of cells we will initialize
     T --> simulation temperature
     param --> will either be 'begin' or 'continue'
-    supcomp --> "mustang" or "psc" determines how VASP is called
+    supcomp_phrase --> how vasp is called on supercomputer
     """
 
     cells, names, N = fun.create_cells(Ncells)
     m = Ncells
 
     if param == "begin":
-        E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp) # returns two lists, each of len() = m
+        E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp_phrase) # returns two lists, each of len() = m
 
         C = fun.concentrations(cells, N) # concentration of each species: constant
         X = fun.build_X(cells) # m x m matrix
@@ -95,7 +95,7 @@ def mc2(step_limit, Ncells, T, param, supcomp):
         temp_state = copy.deepcopy(initial_state)
 
         flip = int(uniform(0,2))
-        
+
         if flip == 1:
             new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
         else:
@@ -115,7 +115,7 @@ def mc2(step_limit, Ncells, T, param, supcomp):
                 # Step 3: run vasp on the new state
                 #         and record E,V
                 #-----------------------------------------------
-                new_E, new_V = fun.vasp_run(r,supcomp)
+                new_E, new_V = fun.vasp_run(r,supcomp_phrase)
                 E[r][1] = new_E # new energy
                 V[r][1] = new_V # new volume
                 for i in range(m):

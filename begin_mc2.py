@@ -13,6 +13,7 @@ step_limit = 2500
 Ncells = 5
 T = 1273
 param = "begin" # should be 'begin' or 'continue'
-supcomp = "mustang" # 'mustang' or 'psc' for my work but should be updated by user
+supcomp_phrase = "vasp" # for Mustang runs
+#supcomp_phrase = "mpirun -np $SLURM_NTASKS /opt/packages/VASP/VASP5/INTEL/vasp_std"
 
-mc2(step_limit, Ncells, T, param, supcomp)
+mc2(step_limit, Ncells, T, param, supcomp_phrase)

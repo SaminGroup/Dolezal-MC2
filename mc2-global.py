@@ -5,7 +5,7 @@ import myfuncs as fun
 from random import uniform
 
 
-def mc2(step_limit, Ncells, T, param, supcomp):
+def mc2(step_limit, Ncells, T, param, supcomp_phrase):
     """
     performs the overall mc2 loop
 
@@ -13,7 +13,7 @@ def mc2(step_limit, Ncells, T, param, supcomp):
     Ncells --> the number of cells we will initialize
     T --> simulation temperature
     param --> will either be 'begin' or 'continue'
-    supcomp --> "mustang" or "psc" determines how VASP is called
+    supcomp_phrase --> how vasp is called on supercomputer
     """
 
 
@@ -22,7 +22,7 @@ def mc2(step_limit, Ncells, T, param, supcomp):
 
     if param == "begin":
 
-        E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp) # returns two lists, each of len() = m
+        E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp_phrase) # returns two lists, each of len() = m
 
         C = fun.concentrations(cells, N) # concentration of each species: constant
         X = fun.build_X(cells) # m x m matrix
@@ -99,11 +99,9 @@ def mc2(step_limit, Ncells, T, param, supcomp):
         temp_state = copy.deepcopy(initial_state)
 
         flip = int(uniform(0,2))
-        
+
         if flip == 1:
 
-            if singular == 1:
-                did_global = 1
 
             if did_global == 0:
                 new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
@@ -132,7 +130,7 @@ def mc2(step_limit, Ncells, T, param, supcomp):
                 #         and record E,V
                 #-----------------------------------------------
                 if did_global == 0:
-                    new_E, new_V = fun.vasp_run(r,supcomp)
+                    new_E, new_V = fun.vasp_run(r,supcomp_phrase)
                     E[r][1] = new_E # new energy
                     V[r][1] = new_V # new volume
                     for i in range(m):
@@ -140,7 +138,7 @@ def mc2(step_limit, Ncells, T, param, supcomp):
                             E[i][1] = E[i][0] # final = initial for unselected cells
                             V[i][1] = V[i][0] # final = initial ''
                 else:
-                    new_E, new_V = fun.global_vasp_run(m,supcomp)
+                    new_E, new_V = fun.global_vasp_run(m,supcomp_phrase)
                     for i in range(m):
                         E[i][1] = new_E[i] # final = initial for unselected cells
                         V[i][1] = new_V[i] # final = initial ''
