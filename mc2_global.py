@@ -5,7 +5,7 @@ import myfuncs as fun
 from random import uniform
 
 
-def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
+def mc2(step_limit, Ncells, T, param, supcomp_phrase):
     """
     performs the overall mc2 loop
 
@@ -16,10 +16,12 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
     supcomp_phrase --> how vasp is called on supercomputer
     """
 
+
     cells, names, N = fun.create_cells(Ncells)
     m = Ncells
 
     if param == "begin":
+
         E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp_phrase) # returns two lists, each of len() = m
 
         C = fun.concentrations(cells, N) # concentration of each species: constant
@@ -56,12 +58,12 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
 
         continue_step = 0
         xdata = fun.atomic_percents(X,xdata)
-        fun.data_text([frac_data, E_data, V_data], continue_step,xdata)
+        fun.data_text([frac_data, E_data, V_data], continue_step ,xdata)
     #--------------------------------
     # Data import
     #--------------------------------
     else:
-
+        cells, names, N = fun.create_cells(m)
         C = np.loadtxt("data/concentration")
         X = fun.build_X(cells) # m x m matrix
         f0 = fun.calc_f(X,C) # m x 1 vector
@@ -85,7 +87,9 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
     Flist = [f0, 0]
     states = [cells, 0]
 
-    singular = 0 ; intra_test = 1; failed_count = 0
+    global_step = continue_step
+
+    singular = 0 ; intra_test = 1 ; failed_count = 0 ; did_global = 1
     for step in range(continue_step,step_limit+1):
         initial_state = states[0]
         # Step 1: select a random cell for this trial, the cells that were not
@@ -96,12 +100,22 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
         flip = int(uniform(0,2))
 
         if flip == 1:
-            new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
+
+
+            if did_global == 0:
+                new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
+            else:
+                new_state, X_new = fun.global_flip(temp_state)
+
         else:
             new_state, r, X_new, intra_test = fun.intraswap(temp_state)
 
         if intra_test == 1:
-            fun.local_potcar_update(m, names, r)
+
+            if did_global == 0:
+                fun.local_potcar_update(m, names, r)
+            else:
+                fun.global_potcar_update(m,names)
             # f = [f_cell_1, f_cell_2,..., f_cell_m]
             #-----------------------------------------------
             states[1] = new_state
@@ -114,18 +128,25 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
                 # Step 3: run vasp on the new state
                 #         and record E,V
                 #-----------------------------------------------
-                new_E, new_V = fun.vasp_run(r,supcomp_phrase)
-                E[r][1] = new_E # new energy
-                V[r][1] = new_V # new volume
-                for i in range(m):
-                    if i != r:
-                        E[i][1] = E[i][0] # final = initial for unselected cells
-                        V[i][1] = V[i][0] # final = initial ''
+                if did_global == 0:
+                    new_E, new_V = fun.vasp_run(r,supcomp_phrase)
+                    E[r][1] = new_E # new energy
+                    V[r][1] = new_V # new volume
+                    for i in range(m):
+                        if i != r:
+                            E[i][1] = E[i][0] # final = initial for unselected cells
+                            V[i][1] = V[i][0] # final = initial ''
+                else:
+                    new_E, new_V = fun.global_vasp_run(m,supcomp_phrase)
+                    for i in range(m):
+                        E[i][1] = new_E[i] # final = initial for unselected cells
+                        V[i][1] = new_V[i] # final = initial ''
                 #-----------------------------------------------
                 # Step 4: calculate the change dH,dV for the acceptance
                 #-----------------------------------------------
                 dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
                 accept = fun.acceptance(dH, dV, dX)
+
             else:
                 accept = 0
                 singular = 1
@@ -146,21 +167,32 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
                 for j in range(len(xdata[i])):
                     xdata[i][j].append(xdata[i][j][-1])
 
-            stepcount = np.append(stepcount,step)
             fun.data_text([frac_data, E_data, V_data], step, xdata)
-            os.system("rm CONTCAR{}".format(r+1))
 
         else:
-            X = X_new
 
-            fun.update_poscar(r,new_state,names) # save contcar as poscar{} file
-            E[r][0] = new_E
-            V[r][0] = new_V
+            X = X_new
             xdata = fun.atomic_percents(X,xdata)
-            newvars = [new_E, new_V]
             Flist[0] = f
-            new_state = fun.accepted_state_update(new_state,r,m)
+
+            if did_global == 0:
+                fun.update_poscar(r,new_state,names) # save contcar as poscar{} file
+                E[r][0] = new_E
+                V[r][0] = new_V
+                newvars = [new_E, new_V]
+                dataset = fun.data_update(r, f, frac_data, newvars, ev_data)
+                new_state = fun.accepted_state_update(new_state,r,m)
+                if step == global_step + 10:
+                    did_global = 1
+            else:
+                fun.global_poscar_update(m,new_state,names)
+                for i in range(m):
+                    E[i][0] = new_E[i]
+                    V[i][0] = new_V[i]
+                dataset = fun.global_data_update(f,frac_data,E_data,new_E,V_data,new_V)
+                new_state = fun.global_accepted_state_update(new_state,m)
+                global_step = step
+                did_global = 0
+
             states[0] = new_state
-            stepcount = np.append(stepcount, step)
-            dataset = fun.data_update(r, f, frac_data, newvars, ev_data)
             fun.data_text(dataset,step,xdata)
