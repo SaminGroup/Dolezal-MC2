@@ -7,6 +7,13 @@ import seaborn as sns
 from plot_aupt import plot_aupt
 
 def data_to_csv():
+
+    """
+
+    19 Nov 2021: changed how xdata is recorded and imported
+
+    """
+
     species = input('Please list the species in order as found in the POSCAR: ').split()
     Temp = input("Simulation Temperature: ")
     save_title = "".join(species)
@@ -23,11 +30,6 @@ def data_to_csv():
         dataset[i] = np.loadtxt(filenames[i],dtype=float)
     dataset = np.array(dataset)
     m = len(dataset[0])
-
-    for i in range(len(dataset[1,1])):
-        if dataset[1,1,i] == -3495.6448167:
-            dataset[1,1,i] = -.28814897E+03
-
     ##---------------------------------
     ## Energy/Volume per Atom
     ##---------------------------------
@@ -49,20 +51,10 @@ def data_to_csv():
     deltaE = (abs(deltaE[0]) - abs(deltaE))
     deltaV = (abs(deltaV[0]) - abs(deltaV))
     ##----------------------------------
-    ## Step 1b: read in the At.% data
+    ## Step 2: read in stepcount and At.% data
     ##----------------------------------
-    xdata = []
-    for i in range(m):
-        cell_data = np.loadtxt(dir+'data/xdata_cell{}'.format(i+1),dtype=float)
-        if m > 2:
-            xdata.append(cell_data)
-        else:
-            xdata.append([cell_data])
-
-    ##----------------------------------
-    ## Step 2: now import the stepcount data and convert strings to float
-    ##----------------------------------
-    stepcount = np.loadtxt(dir+"data/stepcount").astype(int)
+    stepcount = np.loadtxt(dir+"data/stepcount")[0]
+    xdata = np.loadtxt(dir+"data/xdata").reshape(m,m,stepcount)
     ##-----------------------------------
     ## Step 3: create the pandas dataframe and save to csv file
     ##-----------------------------------
@@ -76,7 +68,7 @@ def data_to_csv():
     ##------------------------------------
     ## Step 3a creating the columns of data
     ##------------------------------------
-    df = pd.DataFrame({'Steps':stepcount})
+    df = pd.DataFrame({'Steps':np.arange(stepcount)})
     for i in range(len(dataset)):
         for j in range(m):
             df[names[j][i]] = pd.Series(dataset[i][j])
@@ -106,7 +98,7 @@ def plot_data(m,dir,species,Temp):
         mofac.append('Molar Fraction {}'.format(i+1))
         xdata.append([])
         df[mofac[i]] = df[mofac[i]]*100
-        for j in range(m-1):
+        for j in range(m):
             xdata[i].append('At.% Cell {}, Species {}'.format(i+1,j+1))
             df['At.% Cell {}, Species {}'.format(i+1,j+1)] = df['At.% Cell {}, Species {}'.format(i+1,j+1)]*100
     ##--------------------------------------------------------------
@@ -114,10 +106,9 @@ def plot_data(m,dir,species,Temp):
     ## the m-1 values and subtract that sum from 100 to produce the mth
     ## species percent
     ##--------------------------------------------------------------
-    stepcount = np.asarray(df["Steps"])
     labels = []
     en_list = []
-    fractions = []
+
     for i in range(m):
         labels.append('Cell {}'.format(i+1))
         en_list.append("Energy {}".format(i+1))
@@ -133,31 +124,12 @@ def plot_data(m,dir,species,Temp):
     plt.grid(which="major",alpha=0.6)
     plt.grid(which="minor",alpha=0.3)
     plt.tight_layout()
-    plt.savefig(dir+'total-energy.png', dpi=300,bbox_inches="tight")
+    plt.savefig(dir+'total-energy.png', dpi=400,bbox_inches="tight")
     plt.close()
 
     equil_step = int(input("Equilibrium Begins: "))
     cell_shape = input("Cell Shapes: ").split()
 
-
-    """
-    fig,ax = plt.subplots()
-    shapes = ["Simple Cubic", "BCC", "FCC", "HCP"]
-    cellshapes = np.loadtxt(dir+"data/cell_structures").astype(int)
-    labels = ["Cell {}".format(i+1) for i in range(m)]
-    for i in range(m):
-        ax.plot(np.arange(len(cellshapes[0])),cellshapes[i])
-    ax.set_yticks([1,2,3,4])
-    ax.set_yticklabels(shapes)
-    plt.xlabel("Steps")
-    plt.legend(labels,frameon=False)
-    plt.savefig(dir+"cell-shapes.png",dpi=300,bbox_inches="tight")
-    plt.close()
-
-    cell_shape = []
-    for i in range(m):
-        cell_shape.append(shapes[cellshapes[i][-1]-1])
-    """
     for i in range(m):
         fac,fbins = np.histogram(df[mofac[i]],25);fbins=fbins[:-1]
         bar = plt.bar(fbins,fac,label="Cell {}".format(i+1))
@@ -165,8 +137,9 @@ def plot_data(m,dir,species,Temp):
     plt.xlabel("Molar Fraction (%)")
     plt.ylabel("Counts")
     plt.legend(frameon=False)
-    plt.show()
-    plt.close()
+    plt.savefig(dir+"molar-frac-histogram.png",dpi=400,bbox_inches='tight')
+
+
     fig,ax = plt.subplots()
     df.plot(x = 'Steps', y= mofac, legend=None)
     plt.ylabel("Molar Fraction (%)")
@@ -176,7 +149,7 @@ def plot_data(m,dir,species,Temp):
     plt.grid(which="major",alpha=0.6)
     plt.grid(which="minor",alpha=0.3)
     plt.tight_layout()
-    plt.savefig(dir+'molar-frac.png', dpi=300,bbox_inches="tight")
+    plt.savefig(dir+'molar-frac.png', dpi=400,bbox_inches="tight")
     plt.close()
 
     fig,ax = plt.subplots()
@@ -187,7 +160,7 @@ def plot_data(m,dir,species,Temp):
     plt.grid(which="major",alpha=0.6)
     plt.grid(which="minor",alpha=0.3)
     plt.tight_layout()
-    plt.savefig(dir+'energy.png', dpi=300,bbox_inches="tight")
+    plt.savefig(dir+'energy.png', dpi=400,bbox_inches="tight")
     plt.close()
 
     fig,ax = plt.subplots()
@@ -197,36 +170,18 @@ def plot_data(m,dir,species,Temp):
     plt.grid(which="major",alpha=0.6)
     plt.grid(which="minor",alpha=0.3)
     plt.tight_layout()
-    plt.savefig(dir+'total-volume.png',dpi=300,bbox_inches="tight")
+    plt.savefig(dir+'total-volume.png',dpi=400,bbox_inches="tight")
     plt.close()
     ##--------------------------------
     ## Sort the species for the atomic
     ## percents plots
     ##--------------------------------
-    atomicpercents = np.zeros((m,m,len(df[xdata[0][0]])))
-    for i in range(m):
-        for j in range(m-1):
-            atomicpercents[i][j] = df[xdata[i][j]]
-
-    ##-------------------------------
-    ## need to add in atomic percent of
-    ## the mth species
-    ##-------------------------------
-    for i in range(m):
-        species_m = np.zeros(len(atomicpercents[i][0]))
-        for k in range(len(atomicpercents[i][0])):
-            sum1 = np.zeros(m)
-            for j in range(m-1):
-                sum1[j] = (atomicpercents[i][j][k])
-            species_m[k] = (100 - sum1.sum())
-        atomicpercents[i][m-1] = species_m
-
+    atomicpercents = np.loadtxt(dir+"data/xdata").reshape(m,m,df["Steps"].iloc[-1])
     ##----------------------------------
     ## Generate pie chart of surviving
     ## phases and bar plot of final
     ## atomic percent
     ##----------------------------------
-    #cells = np.zeros(m,dtype=object)
     phase_concentrations = np.zeros(m)
     X = []
 
@@ -249,9 +204,6 @@ def plot_data(m,dir,species,Temp):
     error = np.zeros((m,))
     for i in range(m):
         error[i] = np.std(df[mofac[i]][equil_step-1:])
-
-
-
 
     X_axis = np.arange(m)
     w = (1/(m+0.75))
@@ -277,8 +229,6 @@ def plot_data(m,dir,species,Temp):
     axes[0].set_ylim(0,phase_concentrations.max() + 10)
 
 
-
-
     for i in range(m):
         bar1 = axes[1].bar(X_axis+((i)*(w)), final_at_percent[:,i], w, edgecolor='black')
         axes[1].set_xticks(X_axis+(i*w/2))
@@ -297,7 +247,7 @@ def plot_data(m,dir,species,Temp):
                         size=8)
 
     axes[1].legend(species,frameon=False, ncol = m, loc='upper right')
-    plt.savefig(dir+"phase_percents.png",dpi=300,bbox_inches="tight")
+    plt.savefig(dir+"phase_percents.png",dpi=400,bbox_inches="tight")
     plt.close()
     ##----------------------------------
     ## Here is where we plot the atomic
@@ -319,16 +269,13 @@ def plot_data(m,dir,species,Temp):
         plt.subplots_adjust(wspace=0.0, hspace=0.0)
         fig.text(0.03, 0.5, 'Atomic Concentration %', va='center', rotation='vertical')
 
+
     axes[0].legend(loc='upper left', frameon=False,ncol=m,fontsize=10, labelcolor='w')
-    #textod = 'T = {} K'.format(Temp)
-    #od = offsetbox.AnchoredText(textod, loc="lower left", frameon=False, prop=dict(fontsize=10, color='white'))
-    #axes[-1].add_artist(od)
     plt.ylim(0,100)
-    plt.xlim(xmin = 0)
-    plt.xlim(xmax = df['Steps'].max())
+    plt.xlim(0,df['Steps'].max())
     plt.xlabel('Monte Carlo Steps')
     fig.text(0.77,0.89,"T = {} K".format(Temp),fontsize=10)
-    plt.savefig(dir+'atomicpercent.png', dpi=300,bbox_inches="tight")
+    plt.savefig(dir+'atomicpercent.png', dpi=400,bbox_inches="tight")
     plt.close()
     ##----------------------------------
 
