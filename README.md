@@ -13,7 +13,11 @@ For my work I used Bridges-2 at Pittsburgh Supercomputing Center and AFRL DSRC M
 mc2.py executes the algorithm with no global flips while mc2-global.py does include the global flip. I've generated two versions just in case. I've included INCAR0 and INCAR1 files as a sample of how I ran the mc2 algorithm for my research. I've also included data_to_csv.py as an example of how I analyzed the MC2 results. This file generates a CSV file which holds all of the MC data. It also generates plots of the data. There are a few user inputs and I've listed an example below,
 
 Please list the species in order as found in the POSCAR: Al Nb Ta Ti Zr
+
 Simulation Temperature: 1373
+
 How many atoms per cell? 48 48 48 48 48
-Equilibrium Begins: 1
+
+Equilibrium Begins: 500
+
 Cell Shapes: BCC HCP FCC BCC BCC
