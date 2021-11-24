@@ -5,7 +5,7 @@ import myfuncs as fun
 from random import uniform
 
 
-def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
+def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
     """
     performs the overall mc2 loop
 
@@ -13,6 +13,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
     Ncells --> the number of cells we will initialize
     T --> simulation temperature
     param --> will either be 'begin' or 'continue'
+    intra --> True or False, to perform intraswaps
     supcomp_phrase --> how vasp is called on supercomputer
     """
 
@@ -90,12 +91,14 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
     singular = 0 ; intra_test = 1; failed_count = 0
     for step in range(continue_step+1,step_limit+1):
         initial_state = states[0]
-        # Step 1: select a random cell for this trial, the cells that were not
-        #         selected have the same final and initial state for this cycle
-        #-----------------------------------------------
+
+
         temp_state = copy.deepcopy(initial_state)
 
-        flip = int(uniform(0,2))
+        flip = 1
+        intra_test = 1
+        if intra:
+            flip = int(uniform(0,2))
 
         if flip == 1:
             new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
