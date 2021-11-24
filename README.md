@@ -7,8 +7,14 @@ MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". 
 
         1. data/ directory
         2. potcar/ directory with each species POTCAR file inside labeled {}_POTCAR (i.e. Al_POTCAR, Nb_POTCAR, Ta_POTCAR, etc.)
-        3. POSCAR1, POSCAR2, ..., POSCARm with concatenated POTCAR1, POTCAR2,..., POTCARm files
-        4. INCAR0 for the intitial relaxation VASP calculation and INCAR1 for the MC2-ISIF-3 calculations
+        3. POSCAR1, POSCAR2, ..., POSCARm 
+        4. Concatenated POTCAR1, POTCAR2,..., POTCARm files
+        5. INCAR0 for the intitial relaxation VASP calculation and INCAR1 for the MC2-ISIF-3 calculations
+        6. KPOINTS
+        7. begin_mc2.py
+        8. mc2.py
+        9. mc2_global.py
+        10. myfuncs.py
 
 
 Unsure how to make the MC2 simulation cells? Please check out MC2_simcells/ where you can easily make the simulation cells.  
