@@ -53,8 +53,9 @@ def data_to_csv():
     ##----------------------------------
     ## Step 2: read in stepcount and At.% data
     ##----------------------------------
-    stepcount = np.loadtxt(dir+"data/stepcount")[0]
-    xdata = np.loadtxt(dir+"data/xdata").reshape(m,m,stepcount)
+    stepcount = np.loadtxt(dir+"data/stepcount",dtype=int)
+
+    xdata = np.loadtxt(dir+"data/xdata").reshape(m,m,stepcount+1)
     ##-----------------------------------
     ## Step 3: create the pandas dataframe and save to csv file
     ##-----------------------------------
@@ -68,7 +69,7 @@ def data_to_csv():
     ##------------------------------------
     ## Step 3a creating the columns of data
     ##------------------------------------
-    df = pd.DataFrame({'Steps':np.arange(stepcount)})
+    df = pd.DataFrame({'Steps':np.arange(stepcount+1)})
     for i in range(len(dataset)):
         for j in range(m):
             df[names[j][i]] = pd.Series(dataset[i][j])
@@ -132,7 +133,7 @@ def plot_data(m,dir,species,Temp):
 
     for i in range(m):
         fac,fbins = np.histogram(df[mofac[i]],25);fbins=fbins[:-1]
-        bar = plt.bar(fbins,fac,label="Cell {}".format(i+1))
+        bar = plt.bar(fbins,fac,label="Cell {}".format(i+1),edgecolor="none")
     plt.xticks(np.arange(0,110,10))
     plt.xlabel("Molar Fraction (%)")
     plt.ylabel("Counts")
@@ -176,7 +177,8 @@ def plot_data(m,dir,species,Temp):
     ## Sort the species for the atomic
     ## percents plots
     ##--------------------------------
-    atomicpercents = np.loadtxt(dir+"data/xdata").reshape(m,m,df["Steps"].iloc[-1])
+    atomicpercents = np.loadtxt(dir+"data/xdata").reshape(m,m,df["Steps"].iloc[-1]+1)
+    atomicpercents *= 100
     ##----------------------------------
     ## Generate pie chart of surviving
     ## phases and bar plot of final
@@ -228,7 +230,7 @@ def plot_data(m,dir,species,Temp):
     axes[0].set_ylabel('Molar Fraction (%)')
     axes[0].set_ylim(0,phase_concentrations.max() + 10)
 
-
+    print(final_at_percent)
     for i in range(m):
         bar1 = axes[1].bar(X_axis+((i)*(w)), final_at_percent[:,i], w, edgecolor='black')
         axes[1].set_xticks(X_axis+(i*w/2))
