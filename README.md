@@ -1,13 +1,12 @@
 # Dolezal-MC2
 
 This is my version of MC2 inspired by the released version (https://www.nature.com/articles/s41524-019-0259-z), but with the updated acceptance criterion derived
-here (https://ui.adsabs.harvard.edu/abs/2020PhRvE.101f3306A/abstract). MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". Before calling this
-make sure to have the following in the parent directory:
+here (https://ui.adsabs.harvard.edu/abs/2020PhRvE.101f3306A/abstract). MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". Before calling this make sure to have the following in the parent directory:
 
         1. data/ directory
         2. potcar/ directory with each species POTCAR file inside labeled {}_POTCAR (i.e. Al_POTCAR, Nb_POTCAR, Ta_POTCAR, etc.)
         3. POSCAR1, POSCAR2, ..., POSCARm with concatenated POTCAR1, POTCAR2,..., POTCARm files
-        4. INCAR0 for the intitial static VASP calculation and INCAR1 for the MC2-ISIF-3 calculations
+        4. INCAR0 for the intitial relaxation VASP calculation and INCAR1 for the MC2-ISIF-3 calculations
 
 For my work I used Bridges-2 at Pittsburgh Supercomputing Center and AFRL DSRC Mustang to execute vasp which is why I've included the supcomp_phrase param. Please update this parameter with a string containing the correct phrase to call VASP for your work.
 
