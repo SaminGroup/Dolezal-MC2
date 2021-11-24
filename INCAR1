@@ -10,13 +10,12 @@ general:
   SIGMA  = 0.2 # width of the smearing in eV
   ISIF   = 3 # determines what to calculate and the degrees of freedom
   IBRION = 2 # ions relaxed to ground state using Conjugate-Gradient method
-  NSW = 60 # max number of ionic steps to perform
+  NSW = 30 # max number of ionic steps to perform
   NELM = 30 # number of ELM steps
   NELMIN = 8
   POTIM = 0.1
   ISYM = 0
   NCORE = 24
-  LREAL = Auto # be careful with this setting; access the VASP wiki to
-               # decide if this is optimal for your system
+  LREAL = Auto
   LWAVE = .FALSE.
   LCHARG = .FALSE.
