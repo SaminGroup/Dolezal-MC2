@@ -1,3 +1,5 @@
+**Please make sure you have Atomic Simulation Environment (ASE) installed before trying to use this tool "pip install ase", "conda install -c conda-forge ase", https://github.com/rosswhitfield/ase
+
 Before calling "write_poscars.py" make sure you have the right POTCAR files in the potcars/ directory and they are of the form {}_POTCAR (Au_POTCAR, Pt_POTCAR, etc)
 
 The POSCAR1 file in potcars/ can be deleted. Once ready, call write_poscars.py, "python3 write_poscars.py" where a few prompts will appear, here are two examples,
