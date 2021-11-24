@@ -23,7 +23,8 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase):
     if param == "begin":
 
         E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp_phrase) # returns two lists, each of len() = m
-
+        cells = fun.global_accepted_state_update(cells,m) # update cells after the
+        # initial vasp relaxations
         C = fun.concentrations(cells, N) # concentration of each species: constant
         X = fun.build_X(cells) # m x m matrix
         f0 = fun.calc_f(X,C) # m x 1 vector
@@ -53,7 +54,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase):
         for i in range(m):
             frac_data[i].append(f0[i])
         for i in range(m):
-            for j in range(m-1):
+            for j in range(m):
                 xdata[i].append([])
 
         continue_step = 0
@@ -80,7 +81,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase):
             V[i].append(V_data[i][-1])
             V[i].append(0)
 
-        continue_step = stepcount+1 # set the step number at the last completed step
+        continue_step = stepcount # set the step number at the last completed step
 
 
     ev_data = [E_data, V_data]
@@ -89,12 +90,10 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase):
 
     global_step = continue_step
 
-    singular = 0 ; intra_test = 1 ; failed_count = 0 ; did_global = 1
-    for step in range(continue_step,step_limit+1):
+    singular = 0 ; intra_test = 1 ; failed_count = 0 ; did_global = 0
+    for step in range(continue_step+1,step_limit+1):
         initial_state = states[0]
-        # Step 1: select a random cell for this trial, the cells that were not
-        #         selected have the same final and initial state for this cycle
-        #-----------------------------------------------
+
         temp_state = copy.deepcopy(initial_state)
 
         flip = int(uniform(0,2))
@@ -104,55 +103,48 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase):
 
             if did_global == 0:
                 new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
+                fun.local_potcar_update(m, names, r)
             else:
                 new_state, X_new = fun.global_flip(temp_state)
+                fun.global_potcar_update(m,names)
 
         else:
             new_state, r, X_new, intra_test = fun.intraswap(temp_state)
+            fun.local_potcar_update(m, names, r)
 
         if intra_test == 1:
 
-            if did_global == 0:
-                fun.local_potcar_update(m, names, r)
-            else:
-                fun.global_potcar_update(m,names)
-            # f = [f_cell_1, f_cell_2,..., f_cell_m]
-            #-----------------------------------------------
+
             states[1] = new_state
 
             f = fun.calc_f(X_new,C)
             Flist[1] = f
 
-            if fun.mofac_test(f) == 1:
-                #-----------------------------------------------
-                # Step 3: run vasp on the new state
-                #         and record E,V
-                #-----------------------------------------------
-                if did_global == 0:
-                    new_E, new_V = fun.vasp_run(r,supcomp_phrase)
-                    E[r][1] = new_E # new energy
-                    V[r][1] = new_V # new volume
-                    for i in range(m):
-                        if i != r:
-                            E[i][1] = E[i][0] # final = initial for unselected cells
-                            V[i][1] = V[i][0] # final = initial ''
-                else:
-                    new_E, new_V = fun.global_vasp_run(m,supcomp_phrase)
-                    for i in range(m):
-                        E[i][1] = new_E[i] # final = initial for unselected cells
-                        V[i][1] = new_V[i] # final = initial ''
-                #-----------------------------------------------
-                # Step 4: calculate the change dH,dV for the acceptance
-                #-----------------------------------------------
-                dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
-                accept = fun.acceptance(dH, dV, dX)
 
+            #-----------------------------------------------
+            # Step 3: run vasp on the new state
+            #         and record E,V
+            #-----------------------------------------------
+            if did_global == 0:
+                new_E, new_V = fun.vasp_run(r,supcomp_phrase)
+                E[r][1] = new_E # new energy
+                V[r][1] = new_V # new volume
+                for i in range(m):
+                    if i != r:
+                        E[i][1] = E[i][0] # final = initial for unselected cells
+                        V[i][1] = V[i][0] # final = initial ''
             else:
-                accept = 0
-                singular = 1
-                failed_count += 1
-                np.savetxt("data/failed-count.txt",[failed_count])
-                os.system("rm POSCAR")
+                new_E, new_V = fun.global_vasp_run(m,supcomp_phrase)
+                for i in range(m):
+                    E[i][1] = new_E[i] # final = initial for unselected cells
+                    V[i][1] = new_V[i] # final = initial ''
+            #-----------------------------------------------
+            # Step 4: calculate the change dH,dV for the acceptance
+            #-----------------------------------------------
+            dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
+            accept = fun.acceptance(dH, dV, dX)
+
+
 
         else:
             accept = 0

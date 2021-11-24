@@ -21,7 +21,8 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
 
     if param == "begin":
         E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp_phrase) # returns two lists, each of len() = m
-
+        cells = fun.global_accepted_state_update(cells,m) # update cells after the
+        # initial vasp relaxations
         C = fun.concentrations(cells, N) # concentration of each species: constant
         X = fun.build_X(cells) # m x m matrix
         f0 = fun.calc_f(X,C) # m x 1 vector
@@ -51,12 +52,12 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
         for i in range(m):
             frac_data[i].append(f0[i])
         for i in range(m):
-            for j in range(m-1):
+            for j in range(m):
                 xdata[i].append([])
 
         continue_step = 0
         xdata = fun.atomic_percents(X,xdata)
-        fun.data_text([frac_data, E_data, V_data], continue_step,xdata)
+        fun.data_text([frac_data, E_data, V_data], continue_step, xdata)
     #--------------------------------
     # Data import
     #--------------------------------
@@ -78,7 +79,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
             V[i].append(V_data[i][-1])
             V[i].append(0)
 
-        continue_step = stepcount+1 # set the step number at the last completed step
+        continue_step = stepcount # set the step number at the last completed step
 
 
     ev_data = [E_data, V_data]
@@ -86,7 +87,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
     states = [cells, 0]
 
     singular = 0 ; intra_test = 1; failed_count = 0
-    for step in range(continue_step,step_limit+1):
+    for step in range(continue_step+1,step_limit+1):
         initial_state = states[0]
         # Step 1: select a random cell for this trial, the cells that were not
         #         selected have the same final and initial state for this cycle
@@ -109,29 +110,24 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
             f = fun.calc_f(X_new,C)
             Flist[1] = f
 
-            if fun.mofac_test(f) == 1:
-                #-----------------------------------------------
-                # Step 3: run vasp on the new state
-                #         and record E,V
-                #-----------------------------------------------
-                new_E, new_V = fun.vasp_run(r,supcomp_phrase)
-                E[r][1] = new_E # new energy
-                V[r][1] = new_V # new volume
-                for i in range(m):
-                    if i != r:
-                        E[i][1] = E[i][0] # final = initial for unselected cells
-                        V[i][1] = V[i][0] # final = initial ''
-                #-----------------------------------------------
-                # Step 4: calculate the change dH,dV for the acceptance
-                #-----------------------------------------------
-                dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
-                accept = fun.acceptance(dH, dV, dX)
-            else:
-                accept = 0
-                singular = 1
-                failed_count += 1
-                np.savetxt("data/failed-count.txt",[failed_count])
-                os.system("rm POSCAR")
+
+            #-----------------------------------------------
+            # Step 3: run vasp on the new state
+            #         and record E,V
+            #-----------------------------------------------
+            new_E, new_V = fun.vasp_run(r,supcomp_phrase)
+            E[r][1] = new_E # new energy
+            V[r][1] = new_V # new volume
+            for i in range(m):
+                if i != r:
+                    E[i][1] = E[i][0] # final = initial for unselected cells
+                    V[i][1] = V[i][0] # final = initial ''
+            #-----------------------------------------------
+            # Step 4: calculate the change dH,dV for the acceptance
+            #-----------------------------------------------
+            dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
+            accept = fun.acceptance(dH, dV, dX)
+
 
         else:
             accept = 0

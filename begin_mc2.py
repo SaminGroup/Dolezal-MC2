@@ -14,8 +14,8 @@ supcomp_phrase = "vasp" # for Mustang runs
 #supcomp_phrase = "mpirun -np $SLURM_NTASKS /opt/packages/VASP/VASP5/INTEL/vasp_std"
 perform_global = True
 
-if perfomr_global:
-    from global_mc2 import mc2
+if perform_global:
+    from mc2_global import mc2
 else:
     from mc2 import mc2
 

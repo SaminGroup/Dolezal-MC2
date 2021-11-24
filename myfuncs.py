@@ -2,11 +2,12 @@ import os
 import re
 import csv
 import copy
+import cvxpy as cp
 import numpy as np
 from math import log
 from random import uniform
 from shutil import copyfile
-from scipy.sparse.linalg import gmres
+from numpy.linalg import norm
 
 
 
@@ -30,7 +31,7 @@ def atomic_percents(X, xdata):
     cell 1 = [[type 1], [type 2], ..., [type m-1]]
     """
     m = len(X[0])
-    for i in range(m-1):
+    for i in range(m):
         for j in range(m):
             xdata[j][i].append(X[i][j])
 
@@ -165,22 +166,16 @@ def data_text(dataset,stepcount,xdata):
     #-----------------------------------------------
     filenames = ['data/mofac', 'data/energy', 'data/volume']
     for i in range(len(filenames)):
-        with open(filenames[i], 'w') as f:
-            wr = csv.writer(f)
-            wr.writerows(dataset[i])
+        np.savetxt(filenames[i],dataset[i])
     #-----------------------------------------------
     # Step 2: write the MC steps to a text file
     #-----------------------------------------------
-    with open('data/stepcount', 'w') as f:
-        wr = csv.writer(f)
-        wr.writerow(stepcount)
+    np.savetxt("data/stepcount",[stepcount],fmt="%s")
     #-----------------------------------------------
     # Step 3: record the atomic percents
     #-----------------------------------------------
-    for i in range(len(xdata)):
-        with open('data/xdata_cell{}'.format(i+1), 'w') as f:
-            wr = csv.writer(f)
-            wr.writerows(xdata[i])
+    xdata = np.array(xdata)
+    np.savetxt("data/xdata",xdata.flatten())
 
 def data_update(r, f, mofac, newvars, ev_data):
     m = len(mofac)
@@ -432,7 +427,7 @@ def global_flip(cells):
     Natoms = len(cells[0])
 
     copy_cells = copy.deepcopy(cells)
-    number_to_flip = round(0.10*Natoms)
+    number_to_flip = 2
     for i in range(m):
         flipped = 0
         options = [x for x in range(0,Natoms)]
@@ -489,56 +484,22 @@ def global_flip(cells):
 
 def import_data(m):
 
-    filenames = ['data/mofac', 'data/energy', 'data/volume']
-    #---------------------------------
-    # Step 1: prepare the data set
-    #---------------------------------
-    dataset = []
+    # to avoid issues with appending to numpy array, convert to lists
+    mofac = list(np.loadtxt("data/mofac",dtype=float))
+    energy = list(np.loadtxt("data/energy",dtype=float))
+    volume = list(np.loadtxt("data/volume",dtype=float))
+    stepcount = np.loadtxt("data/stepcount",dtype=int)
+
     for i in range(m):
-        dataset.append([])
+        mofac[i] = list(mofac[i])
+        energy[i] = list(energy[i])
+        volume[i] = list(volume[i])
+
+    xdata = list(np.loadtxt("data/xdata").reshape(m,m,stepcount+1))
     for i in range(m):
-        dataset[i].append([])
-    #----------------------------------
-    # Step 2: read in the data
-    #----------------------------------
-    mofac = []
-    energy = []
-    volume = []
-    for i in range(len(filenames)):
-        with open(filenames[i], 'r') as f:
-            reader = csv.reader(f)
-            data = list(reader)
-            for alist in data:
-                for k in range(len(alist)):
-                    alist[k] = float(alist[k])
-            if i == 0:
-                for j in range(len(data)):
-                    mofac.append(data[j])
-            elif i == 1:
-                for j in range(len(data)):
-                    energy.append(data[j])
-            elif i == 2:
-                for j in range(len(data)):
-                    volume.append(data[j])
-
-
-    with open('data/stepcount', 'r') as f:
-        reader = csv.reader(f)
-        stepcount = list(reader)[0]
-
-    for i in range(len(stepcount)):
-        stepcount[i] = float(stepcount[i])
-        stepcount[i] = int(stepcount[i])
-
-    xdata = []
-    for i in range(m):
-        with open('data/xdata_cell{}'.format(i+1), 'r') as f:
-            reader = csv.reader(f)
-            cell_data = list(reader)
-            for alist in cell_data:
-                for j in range(len(alist)):
-                    alist[j] = float(alist[j])
-        xdata.append(cell_data)
+        xdata[i] = list(xdata[i])
+        for j in range(m):
+            xdata[i][j] = list(xdata[i][j])
     #-------------------------------------
     return(mofac, energy, volume, stepcount, xdata)
 
@@ -764,7 +725,7 @@ def new_potcar(names, cell_number):
         with open('POTCAR{}'.format(cell_number), 'w') as f:
             f.writelines(lines)
 
-def initial_vasp_run(m, names, cells, supcomp):
+def initial_vasp_run(m, names, cells, supcomp_phrase):
     """
     will run vasp on all initial cells and return E,V
     """
@@ -781,10 +742,7 @@ def initial_vasp_run(m, names, cells, supcomp):
         #-----------------------------------------------------
         # Step 2: run VASP
         #-----------------------------------------------------
-        if supcomp == "mustang":
-            os.system("vasp") # VASP on Mustang
-        else:
-            os.system("mpirun -np $SLURM_NTASKS /opt/packages/VASP/VASP5/INTEL/vasp_std") # VASP on PSC
+        os.system(supcomp_phrase) # VASP on Mustang
         #os.system("rm CHG CHGCAR DOSCAR EIGENVAL IBZKPT PCDAT vasprun.xml REPORT XDATCAR")
         #-----------------------------------------------------
         # Step 3: record the energy and volume from oszicar and outcar
@@ -803,7 +761,7 @@ def initial_vasp_run(m, names, cells, supcomp):
     return(E,V)
 
 
-def vasp_run(r,supcomp):
+def vasp_run(r,supcomp_phrase):
     """
     runs vasp on the cell that was chosen at random and flipped
 
@@ -819,10 +777,7 @@ def vasp_run(r,supcomp):
     #----------------------------------------------
     # Step 2: run VASP
     #----------------------------------------------
-    if supcomp == "mustang":
-        os.system("vasp") # VASP on Mustang
-    else:
-        os.system("mpirun -np $SLURM_NTASKS /opt/packages/VASP/VASP5/INTEL/vasp_std") # VASP on PSC
+    os.system(supcomp_phrase) # VASP on Mustang
     #os.system("rm CHG CHGCAR DOSCAR EIGENVAL IBZKPT PCDAT vasprun.xml REPORT XDATCAR")
     #-----------------------------------------------------
     # Step 3: record the energy and volume from oszicar and outcar
@@ -836,7 +791,7 @@ def vasp_run(r,supcomp):
     return(E,V)
 
 
-def global_vasp_run(m,supcomp):
+def global_vasp_run(m,supcomp_phrase):
     """
     for global flip we need to run and store all outputs until acceptance has
     been determined
@@ -852,10 +807,7 @@ def global_vasp_run(m,supcomp):
         #-----------------------------------------------------
         # Step 2: run VASP
         #-----------------------------------------------------
-        if supcomp == "mustang":
-            os.system("vasp") # VASP on Mustang
-        else:
-            os.system("mpirun -np $SLURM_NTASKS /opt/packages/VASP/VASP5/INTEL/vasp_std") # VASP on PSC
+        os.system(supcomp_phrase) # VASP on Mustang
         #os.system("rm CHG CHGCAR DOSCAR EIGENVAL IBZKPT PCDAT vasprun.xml REPORT XDATCAR")
         #-----------------------------------------------------
         # Step 3: record the energy and volume from oszicar and outcar
@@ -912,5 +864,8 @@ def calc_f(X,C):
     C--> the concentration of each species in the whole system (must remain
          constant)
     """
-    f = gmres(X,C)[0]
+    f = cp.Variable(X.shape[1])
+    p = cp.Problem(cp.Minimize(cp.sum_squares(X@f-C)),[sum(f) == 1,f <= 1, f >= 0])
+    result = p.solve(solver=cp.ECOS)
+    f = f.value
     return(f)
