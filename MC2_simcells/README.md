@@ -36,4 +36,18 @@ Input cell dimensions for Cell 2, bcc, which has 2 atoms in the unit cell (x y z
 
 -------------------- End --------------------
 
+--------------- Larger System ---------------
+
+Op. System (windows, linux, unix)? windows
+
+Species Names (Au Pt Zr Ti etc)? Al Nb Ta Ti Zr
+
+Total system concentration? 0.1 0.15 0.05 0.3 0.4
+
+Do you wish to create your own simcells or use default (y or d)? d
+
+How many atoms total per sim cell (32 or 48)? 48
+
+-------------------- End --------------------
+
 At the end you will have "m" poscars and "m" concatenated POTCAR files, where m is the number of species in the material you are investigating
