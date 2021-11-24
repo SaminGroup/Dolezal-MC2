@@ -25,6 +25,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase):
         E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp_phrase) # returns two lists, each of len() = m
         cells = fun.global_accepted_state_update(cells,m) # update cells after the
         # initial vasp relaxations
+
         C = fun.concentrations(cells, N) # concentration of each species: constant
         X = fun.build_X(cells) # m x m matrix
         f0 = fun.calc_f(X,C) # m x 1 vector
@@ -64,7 +65,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase):
     # Data import
     #--------------------------------
     else:
-        cells, names, N = fun.create_cells(m)
+
         C = np.loadtxt("data/concentration")
         X = fun.build_X(cells) # m x m matrix
         f0 = fun.calc_f(X,C) # m x 1 vector

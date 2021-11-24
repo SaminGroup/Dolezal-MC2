@@ -20,6 +20,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
     m = Ncells
 
     if param == "begin":
+
         E_list, V_list = fun.initial_vasp_run(m,names,cells,supcomp_phrase) # returns two lists, each of len() = m
         cells = fun.global_accepted_state_update(cells,m) # update cells after the
         # initial vasp relaxations
@@ -142,7 +143,7 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
                 for j in range(len(xdata[i])):
                     xdata[i][j].append(xdata[i][j][-1])
 
-            stepcount = np.append(stepcount,step)
+
             fun.data_text([frac_data, E_data, V_data], step, xdata)
             os.system("rm CONTCAR{}".format(r+1))
 
@@ -157,6 +158,5 @@ def mc2(step_limit, Ncells, T, param, supcomp_phrase_phrase):
             Flist[0] = f
             new_state = fun.accepted_state_update(new_state,r,m)
             states[0] = new_state
-            stepcount = np.append(stepcount, step)
             dataset = fun.data_update(r, f, frac_data, newvars, ev_data)
             fun.data_text(dataset,step,xdata)
