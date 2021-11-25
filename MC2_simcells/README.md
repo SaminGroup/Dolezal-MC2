@@ -1,3 +1,5 @@
+## Dolezal MC2 Simulation Cell Routine
+
 **Please make sure you have Atomic Simulation Environment (ASE) installed before trying to use this tool "pip install ase", "conda install -c conda-forge ase", https://github.com/rosswhitfield/ase
 
 Before calling "write_poscars.py" make sure you have the right POTCAR files in the potcars/ directory and they are of the form {}_POTCAR (Au_POTCAR, Pt_POTCAR, etc)
