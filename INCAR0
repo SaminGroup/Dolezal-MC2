@@ -8,7 +8,7 @@ general:
   ENCUT  = 450 # cutoff energy for the plane wave basis set
   ISMEAR = 1 # determines partial occupancies for each orbital
   SIGMA  = 0.2 # width of the smearing in eV
-  ISIF   = 3 # determines what to calculate and the degrees of freedom
+  ISIF   = 7 # determines what to calculate and the degrees of freedom
   IBRION = 2 # ions relaxed to ground state using Conjugate-Gradient method
   NSW = 100 # max number of ionic steps to perform
   NELM = 30 # number of ELM steps
