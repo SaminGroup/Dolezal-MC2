@@ -8,50 +8,14 @@ The POSCAR1 file in potcars/ can be deleted. Once ready, call write_poscars.py, 
 
 ------------- Using Default ----------------
 
-Op. System (windows, linux, unix)? windows
-
-Species Names (Au Pt Zr Ti etc)? Au Pt
-
-Total system concentration? 0.25 0.75
-
-Do you wish to create your own simcells or use default (y or d)? d
-
-How many atoms total per sim cell (32 or 48)? 32
+![image](https://user-images.githubusercontent.com/47109396/143620800-60f45a04-6130-4f81-b987-e67527c24984.png)
 
 -------------------- End --------------------
 
 --------------- Create Own ------------------
 
-Op. System (windows, linux, unix)? windows
-
-Species Names (Au Pt Zr Ti etc)? Au Pt
-
-Total system concentration? 0.25 0.75
-
-Do you wish to create your own simcells or use default (y or d)? y
-
-How many atoms total per sim cell? 64
-
-Lattice type for each cell (sc bcc fcc hcp) fcc bcc
-
-Input cell dimensions for Cell 1, fcc, which has 4 atoms in the unit cell (x y z): 2 2 4
-
-Input cell dimensions for Cell 2, bcc, which has 2 atoms in the unit cell (x y z): 2 4 4
+![image](https://user-images.githubusercontent.com/47109396/143621142-5c527c29-308d-4408-98c5-8f2dea23107f.png)
 
 -------------------- End --------------------
 
---------------- Larger System ---------------
-
-Op. System (windows, linux, unix)? windows
-
-Species Names (Au Pt Zr Ti etc)? Al Nb Ta Ti Zr
-
-Total system concentration? 0.1 0.15 0.05 0.3 0.4
-
-Do you wish to create your own simcells or use default (y or d)? d
-
-How many atoms total per sim cell (32 or 48)? 48
-
--------------------- End --------------------
-
-At the end you will have "m" poscars and "m" concatenated POTCAR files, where m is the number of species in the material you are investigating
+In both examples I selected "n" for the POTCARs -- only do this if you already have generated all the concatentated POTCARs. Otherwise, select "y", and POTCAR1,...POTCARm will be generated.
