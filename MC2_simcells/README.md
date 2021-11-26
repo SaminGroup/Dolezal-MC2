@@ -18,4 +18,4 @@ The POSCAR1 file in potcars/ can be deleted. Once ready, call write_poscars.py, 
 
 -------------------- End --------------------
 
-In both examples I selected "n" for the POTCARs -- only do this if you already have generated all the concatentated POTCARs. Otherwise, select "y", and POTCAR1,...POTCARm will be generated.
+Make sure to list the concenrations in the same order as the line right above it. In both examples I selected "n" for the POTCARs -- only do this if you already have generated all the concatentated POTCARs. Otherwise, select "y", and POTCAR1,...POTCARm will be generated.
