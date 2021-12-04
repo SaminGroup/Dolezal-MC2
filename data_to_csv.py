@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.offsetbox as offsetbox
 import seaborn as sns
-from plot_aupt import plot_aupt
 
 def data_to_csv():
 
@@ -19,7 +18,7 @@ def data_to_csv():
     save_title = "".join(species)
     title = " ".join(species)
 
-    dir = "plots_{}_{}/".format(save_title,Temp)
+    dir = "{}_{}/".format(save_title,Temp)
 
     filenames = [dir+'data/mofac', dir+'data/energy', dir+'data/volume']
     dataset = [[],[],[]]
@@ -33,10 +32,10 @@ def data_to_csv():
     ##---------------------------------
     ## Energy/Volume per Atom
     ##---------------------------------
-    counts = np.array(input("How many atoms per cell? ").split(),dtype=int)
+    Natoms = int(input("How many atoms per cell? "))
     for k in range(m):
-        dataset[1,k] = dataset[1,k]/counts[k]  # energy per atom
-        dataset[2,k] = dataset[2,k]/counts[k]  # volume per atom
+        dataset[1,k] = dataset[1,k]/Natoms  # energy per atom
+        dataset[2,k] = dataset[2,k]/Natoms  # volume per atom
 
     deltaE = np.zeros((m,len(dataset[0][0]))) # phase-weight x energy per atom
     deltaV = np.zeros((m,len(dataset[0][0]))) # phase-weight x volume per atom
@@ -56,6 +55,13 @@ def data_to_csv():
     stepcount = np.loadtxt(dir+"data/stepcount",dtype=int)
 
     xdata = np.loadtxt(dir+"data/xdata").reshape(m,m,stepcount+1)
+
+    concentration = np.zeros((m,m,stepcount+1))
+    for i in range(m):
+        concentration[i] = (xdata[i]*dataset[0,i])*100
+
+    concentration = sum(concentration)
+    np.savetxt(dir+"data/concentration.txt",concentration)
     ##-----------------------------------
     ## Step 3: create the pandas dataframe and save to csv file
     ##-----------------------------------
@@ -82,10 +88,8 @@ def data_to_csv():
     df["Total V"] = pd.Series(TotalV)
     df['Date'] = pd.Series(pd.to_datetime('today').normalize())
     df.to_csv(dir+'data/dataset.csv',index=False)
-    if title == "Au Pt":
-        plot_aupt(m,dir,Temp)
-    else:
-        plot_data(m,dir,species,Temp)
+
+    plot_data(m,dir,species,Temp)
     ##------------------------------------
 
 def plot_data(m,dir,species,Temp):
@@ -116,10 +120,21 @@ def plot_data(m,dir,species,Temp):
 
     sns.set_theme()
     sns.set_style('ticks')
-    plt.rc('font', family='serif')
 
     fig,ax = plt.subplots()
+    concentration = np.loadtxt(dir+"data/concentration.txt")
+    for i in range(m):
+        plt.plot(df["Steps"],concentration[i])
+    plt.ylabel('Concentration')
+    plt.xlabel("Steps")
+    plt.legend(species,frameon=False)
+    plt.grid(which="major",alpha=0.6)
+    plt.grid(which="minor",alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(dir+'concentration.png', dpi=400,bbox_inches="tight")
+    plt.close()
 
+    fig,ax = plt.subplots()
     df.plot(x = 'Steps', y="Total E", legend=None)
     plt.ylabel('E (eV/atom)')
     plt.grid(which="major",alpha=0.6)
@@ -132,7 +147,7 @@ def plot_data(m,dir,species,Temp):
     cell_shape = input("Cell Shapes: ").split()
 
     for i in range(m):
-        fac,fbins = np.histogram(df[mofac[i]],25);fbins=fbins[:-1]
+        fac,fbins = np.histogram(df[mofac[i]],100);fbins=fbins[:-1]
         bar = plt.bar(fbins,fac,label="Cell {}".format(i+1),edgecolor="none")
     plt.xticks(np.arange(0,110,10))
     plt.xlabel("Molar Fraction (%)")
@@ -142,7 +157,7 @@ def plot_data(m,dir,species,Temp):
 
 
     fig,ax = plt.subplots()
-    df.plot(x = 'Steps', y= mofac, legend=None)
+    df.plot(x = 'Steps', y = mofac, legend=None)
     plt.ylabel("Molar Fraction (%)")
     plt.axvline(equil_step,color="k")
     plt.legend(cell_shape,frameon=False)
@@ -230,7 +245,7 @@ def plot_data(m,dir,species,Temp):
     axes[0].set_ylabel('Molar Fraction (%)')
     axes[0].set_ylim(0,phase_concentrations.max() + 10)
 
-    print(final_at_percent)
+
     for i in range(m):
         bar1 = axes[1].bar(X_axis+((i)*(w)), final_at_percent[:,i], w, edgecolor='black')
         axes[1].set_xticks(X_axis+(i*w/2))
@@ -259,20 +274,16 @@ def plot_data(m,dir,species,Temp):
     fig, axes = plt.subplots(nrows=m, ncols=1, sharex=True, sharey=True)
     fig.suptitle(title)
     for i in range(m):
-        average = 1 - np.average(atomicpercents[i])
-        axes[i].stackplot(df['Steps'], atomicpercents[i],
-                    labels=species,
-                        edgecolor='black',linewidth=1.25)
-
-
+        for j in range(m):
+            axes[i].plot(df['Steps'],atomicpercents[i,j],
+            linewidth=1.75)
         textob = X[i]
-        ob = offsetbox.AnchoredText(textob, loc=4, frameon=False, prop=dict(fontsize=10,color="white"))
+        ob = offsetbox.AnchoredText(textob, loc="upper right", frameon=False, prop=dict(fontsize=10,color="k"))
         axes[i].add_artist(ob)
-        plt.subplots_adjust(wspace=0.0, hspace=0.0)
-        fig.text(0.03, 0.5, 'Atomic Concentration %', va='center', rotation='vertical')
 
-
-    axes[0].legend(loc='upper left', frameon=False,ncol=m,fontsize=10, labelcolor='w')
+    plt.subplots_adjust(wspace=0.0, hspace=0.0)
+    fig.text(0.03, 0.5, 'Atomic Concentration %', va='center', rotation='vertical')
+    axes[0].legend(species,loc='upper left', frameon=False,ncol=m,fontsize=10, labelcolor='k')
     plt.ylim(0,100)
     plt.xlim(0,df['Steps'].max())
     plt.xlabel('Monte Carlo Steps')
