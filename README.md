@@ -9,12 +9,14 @@ MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". 
         2. potcar/ directory with each species POTCAR file inside labeled {}_POTCAR (i.e. Al_POTCAR, Nb_POTCAR, Ta_POTCAR, etc.)
         3. POSCAR1, POSCAR2, ..., POSCARm 
         4. Concatenated POTCAR1, POTCAR2,..., POTCARm files
-        5. INCAR0 for the intitial relaxation VASP calculation and INCAR1 for the MC2-ISIF-3 calculations
-        6. KPOINTS
-        7. begin_mc2.py
-        8. mc2.py
-        9. mc2_global.py
-        10. myfuncs.py
+        5. INCAR0/1 for the intitial volume/position relaxation VASP calculation
+        6. INCAR2 for the MC2-ISIF-3 calculations
+        7. INCAR-S for flipping away from singular states
+        8. KPOINTS
+        9. begin_mc2.py
+        10. mc2.py
+        11. mc2_global.py
+        12. myfuncs.py
 
 
 ### Unsure how to make the MC2 simulation cells? Please check out SaminGroup/Dolezal-MC2_simcells where you can easily make the simulation cells.  
@@ -27,7 +29,7 @@ Please list the species in order as found in the POSCAR: Al Nb Ta Ti Zr
 
 Simulation Temperature: 1373
 
-How many atoms per cell? 48 48 48 48 48
+How many atoms per cell? 48
 
 Equilibrium Begins: 500
 
