@@ -90,9 +90,10 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
     states = [cells, 0]
 
     global_step = continue_step
+    step = continue_step+1
 
     singular = 0 ; intra_test = 1 ; failed_count = 0 ; did_global = 0
-    for step in range(continue_step+1,step_limit+1):
+    while step != step_limit+1:
         initial_state = states[0]
 
         temp_state = copy.deepcopy(initial_state)
@@ -100,7 +101,12 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
         flip = 1
         intra_test = 1
         if intra:
+
             flip = int(uniform(0,2))
+
+        if singular == 1:
+            flip = 1
+            did_global = 1
 
         if flip == 1:
 
@@ -109,12 +115,14 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
                 new_state, r, X_new = fun.flip_and_lever(temp_state,singular)
                 fun.local_potcar_update(m, names, r)
             else:
-                new_state, X_new = fun.global_flip(temp_state)
+                new_state, X_new = fun.global_flip(temp_state,singular)
                 fun.global_potcar_update(m,names)
 
         else:
             new_state, r, X_new, intra_test = fun.intraswap(temp_state)
-            fun.local_potcar_update(m, names, r)
+            # only update if the move is possible
+            if intra_test == 1:
+                fun.local_potcar_update(m, names, r)
 
         if intra_test == 1:
 
@@ -124,35 +132,38 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
             f = fun.calc_f(X_new,C)
             Flist[1] = f
 
-
-            #-----------------------------------------------
-            # Step 3: run vasp on the new state
-            #         and record E,V
-            #-----------------------------------------------
-            if did_global == 0:
-                new_E, new_V = fun.vasp_run(r,supcomp_phrase)
-                E[r][1] = new_E # new energy
-                V[r][1] = new_V # new volume
-                for i in range(m):
-                    if i != r:
-                        E[i][1] = E[i][0] # final = initial for unselected cells
-                        V[i][1] = V[i][0] # final = initial ''
+            if fun.mofac_test(f) == 1:
+                #-----------------------------------------------
+                # Step 3: run vasp on the new state
+                #         and record E,V
+                #-----------------------------------------------
+                if did_global == 0:
+                    new_E, new_V = fun.vasp_run(r,supcomp_phrase)
+                    E[r][1] = new_E # new energy
+                    V[r][1] = new_V # new volume
+                    for i in range(m):
+                        if i != r:
+                            E[i][1] = E[i][0] # final = initial for unselected cells
+                            V[i][1] = V[i][0] # final = initial ''
+                else:
+                    new_E, new_V = fun.global_vasp_run(m,supcomp_phrase,singular)
+                    for i in range(m):
+                        E[i][1] = new_E[i] # final = initial for unselected cells
+                        V[i][1] = new_V[i] # final = initial ''
+                #-----------------------------------------------
+                # Step 4: calculate the change dH,dV for the acceptance
+                #-----------------------------------------------
+                dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
+                accept = fun.acceptance(dH, dV, dX)
             else:
-                new_E, new_V = fun.global_vasp_run(m,supcomp_phrase)
-                for i in range(m):
-                    E[i][1] = new_E[i] # final = initial for unselected cells
-                    V[i][1] = new_V[i] # final = initial ''
-            #-----------------------------------------------
-            # Step 4: calculate the change dH,dV for the acceptance
-            #-----------------------------------------------
-            dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
-            accept = fun.acceptance(dH, dV, dX)
+                accept = 2
+                singular = 1
 
 
 
         else:
-            accept = 0
-            os.system("rm POSCAR")
+            accept = 2
+
 
 
         if accept == 0:
@@ -164,8 +175,9 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
                     xdata[i][j].append(xdata[i][j][-1])
 
             fun.data_text([frac_data, E_data, V_data], step, xdata)
+            step += 1
 
-        else:
+        elif accept == 1:
 
             X = X_new
             xdata = fun.atomic_percents(X,xdata)
@@ -192,3 +204,4 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
 
             states[0] = new_state
             fun.data_text(dataset,step,xdata)
+            step += 1

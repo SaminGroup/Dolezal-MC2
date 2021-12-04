@@ -8,7 +8,7 @@ from math import log
 from random import uniform
 from shutil import copyfile
 from numpy.linalg import norm
-
+from scipy.sparse.linalg import gmres
 
 
 def acceptance(dH, dV, dX):
@@ -72,6 +72,7 @@ def create_cells(Ncells):
     # with the new POSCAR file written, we want to extract the atom positions
         with open('POSCAR{}'.format(acell)) as f:
             lines = f.readlines()
+            f.close()
     # pull out the names and count of each species and total count
         names = lines[5].split()
         number_of_each_type = np.asarray(lines[6].split(),dtype=int)
@@ -249,7 +250,7 @@ def enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T):
                 dX_term2.append(0)
 
 
-    dH = m*B*(sum(dH_term1)-sum(dH_term2))
+    dH = (m*B)*(sum(dH_term1)-sum(dH_term2))
     dV = N*sum(dV)
     dX = N*(sum(dX_term1) - sum(dX_term2))
 
@@ -263,23 +264,29 @@ def flip_and_lever(cells,singular):
     #----------------------------------
     # Step 1: perform a flip
     #----------------------------------
+    chosen = []
     copy_cells = copy.deepcopy(cells) # nested lists need deep copy
     r = int(uniform(0,len(copy_cells))) # the random cell
     r1 = int(uniform(0,len(copy_cells[r]))) # the random atom in cell r
     flip_choice = [x for x in range(1,m+1) if x != copy_cells[r][r1][3]]
     random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
     copy_cells[r][r1][3] = random_flip
-    # if we are making a singular matrix try flipping two atoms in the same
-    # cell (this is not a global flip move)
-    #if singular == 1:
-    second_flip = int(uniform(0,2))
-    if second_flip == 1:
-        r2 = r1
-        while r2 == r1:
-            r2 = int(uniform(0,len(copy_cells[r]))) # the random atom in cell r
-        flip_choice = [x for x in range(1,m+1) if x != copy_cells[r][r2][3]]
-        random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
-        copy_cells[r][r2][3] = random_flip
+    chosen.append(r1)
+    flipcount = len(chosen)
+    #----------------------------------------
+    # if we failed lever_check, flip 5 atoms
+    #----------------------------------------
+    if singular == 1:
+        Nflip = 5
+        while flipcount != Nflip+1:
+
+            r1 = int(uniform(0,len(copy_cells[r]))) # the random atom in cell r
+            if r1 not in chosen:
+                flip_choice = [x for x in range(1,m+1) if x != copy_cells[r][r1][3]]
+                random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
+                copy_cells[r][r1][3] = random_flip
+                chosen.append(r1)
+            flipcount = len(chosen)
 
 
     X = build_X(copy_cells)
@@ -409,13 +416,14 @@ def intraswap(cells):
     return(cells, r, X, 1)
 
 
-
 def formatter(alist):
     space1 = "   "
     newline = space1 + '  '.join(str(num) for num in alist)+"\n"
     return(newline)
 
-def global_flip(cells):
+
+
+def global_flip(cells,singular):
     """
     randomly flip one or more atoms in all cells simultaneously
     -----------------------------------------------------------
@@ -428,6 +436,9 @@ def global_flip(cells):
 
     copy_cells = copy.deepcopy(cells)
     number_to_flip = 2
+    if singular == 1:
+        number_to_flip = 5
+
     for i in range(m):
         flipped = 0
         options = [x for x in range(0,Natoms)]
@@ -731,19 +742,21 @@ def initial_vasp_run(m, names, cells, supcomp_phrase):
     """
     E = []
     V = []
-    copyfile("INCAR0", "INCAR")
     for i in range(m):
         #-----------------------------------------------------
         # Step 1: the initial file to POSCAR and POTCAR for the VASP run
         #-----------------------------------------------------
+        copyfile("INCAR0", "INCAR")
         copyfile('POSCAR{}'.format(i+1), 'POSCAR')
         local_potcar_update(m,names,i)
         copyfile('POTCAR{}'.format(i+1), 'POTCAR')
         #-----------------------------------------------------
-        # Step 2: run VASP
+        # Step 2: run VASP to relax volume and positions
         #-----------------------------------------------------
         os.system(supcomp_phrase) # VASP on Mustang
-        #os.system("rm CHG CHGCAR DOSCAR EIGENVAL IBZKPT PCDAT vasprun.xml REPORT XDATCAR")
+        copyfile("CONTCAR","POSCAR")
+        copyfile("INCAR1", "INCAR")
+        os.system(supcomp_phrase)
         #-----------------------------------------------------
         # Step 3: record the energy and volume from oszicar and outcar
         #-----------------------------------------------------
@@ -752,12 +765,10 @@ def initial_vasp_run(m, names, cells, supcomp_phrase):
         #-----------------------------------------------------
         # Step 4: CONTCAR becomes the new POSCAR{i}
         #-----------------------------------------------------
-        os.system("rm POSCAR")
         copyfile("CONTCAR","CONTCAR{}".format(i+1))
         update_poscar(i, cells, names)
-        os.system("rm CONTCAR CONTCAR{}".format(i+1))
         #-----------------------------------------------------
-    copyfile("INCAR1", "INCAR")
+    copyfile("INCAR2", "INCAR")
     return(E,V)
 
 
@@ -785,19 +796,20 @@ def vasp_run(r,supcomp_phrase):
     E = oszicar()
     V = outcar()
     #----------------------------------------------
-    os.system("rm POSCAR")
     copyfile("CONTCAR", "CONTCAR{}".format(cellnum))
-    os.system("rm CONTCAR")
+
     return(E,V)
 
 
-def global_vasp_run(m,supcomp_phrase):
+def global_vasp_run(m,supcomp_phrase,singular):
     """
     for global flip we need to run and store all outputs until acceptance has
     been determined
     """
     E = []
     V = []
+    if singular == 1:
+        copyfile("INCAR-S","INCAR")
     for i in range(1,m+1):
         #-----------------------------------------------------
         # Step 1: the initial file to POSCAR and POTCAR for the VASP run
@@ -820,6 +832,7 @@ def global_vasp_run(m,supcomp_phrase):
         #-----------------------------------------------------
         copyfile('CONTCAR', 'CONTCAR{}'.format(i))
         #-----------------------------------------------------
+    copyfile('INCAR2','INCAR')
     return(E,V)
 
 def build_X(cells):
@@ -853,8 +866,9 @@ def build_X(cells):
 
     return(np.array(X))
 
+"""
 def calc_f(X,C):
-    """
+    '''
     given the matrix, X, and the vector c, find f, the molar fraction of
     species A and B by solving the matrix equation
 
@@ -863,9 +877,24 @@ def calc_f(X,C):
 
     C--> the concentration of each species in the whole system (must remain
          constant)
-    """
+    '''
     f = cp.Variable(X.shape[1])
     p = cp.Problem(cp.Minimize(cp.sum_squares(X@f-C)),[sum(f) == 1,f <= 1, f >= 0])
     result = p.solve(solver=cp.ECOS)
     f = f.value
     return(f)
+"""
+def calc_f(X,C):
+    f = gmres(X,C,tol = 1e-8)[0]
+    return(f)
+
+
+def lever_check(X,f,C,step):
+    new_c = X@f
+    residual = abs(np.linalg.norm(new_c) - np.linalg.norm(C))
+    if residual <= 5e-3:
+        return(1)
+    else:
+        np.savetxt("data/failed-residual.txt", [residual])
+        np.savetxt("data/failed-concentration.txt", new_c)
+        return(0)
