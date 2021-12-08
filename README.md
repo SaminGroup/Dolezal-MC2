@@ -9,7 +9,7 @@ MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". 
         2. potcar/ directory with each species POTCAR file inside labeled {}_POTCAR (i.e. Al_POTCAR, Nb_POTCAR, Ta_POTCAR, etc.)
         3. POSCAR1, POSCAR2, ..., POSCARm 
         4. Concatenated POTCAR1, POTCAR2,..., POTCARm files
-        5. INCAR0/1 for the intitial volume/position relaxation VASP calculation
+        5. INCAR0/1 for the initial volume/position relaxation VASP calculation
         6. INCAR2 for the MC2-ISIF-3 calculations
         7. INCAR-S for flipping away from singular states
         8. KPOINTS
