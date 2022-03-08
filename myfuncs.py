@@ -2,7 +2,6 @@ import os
 import re
 import csv
 import copy
-import cvxpy as cp
 import numpy as np
 from math import log
 from random import uniform
@@ -524,6 +523,9 @@ def mofac_test(F):
         if f > 1.0:
             return(0)
 
+    if abs(sum(F)-1) >= 1e-5:
+        return(0)
+
     return(1)
 
 
@@ -801,7 +803,7 @@ def vasp_run(r,supcomp_phrase):
     return(E,V)
 
 
-def global_vasp_run(m,supcomp_phrase,singular):
+def global_vasp_run(m,supcomp_phrase,step,singular):
     """
     for global flip we need to run and store all outputs until acceptance has
     been determined
@@ -810,6 +812,7 @@ def global_vasp_run(m,supcomp_phrase,singular):
     V = []
     if singular == 1:
         copyfile("INCAR-S","INCAR")
+
     for i in range(1,m+1):
         #-----------------------------------------------------
         # Step 1: the initial file to POSCAR and POTCAR for the VASP run
