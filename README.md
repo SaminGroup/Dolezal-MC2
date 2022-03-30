@@ -1,7 +1,7 @@
 # Dolezal-MC2
 
 This is my version of MC2 inspired by the released version (https://www.nature.com/articles/s41524-019-0259-z), but with the updated acceptance criterion derived
-here (https://ui.adsabs.harvard.edu/abs/2020PhRvE.101f3306A/abstract).
+here (https://ui.adsabs.harvard.edu/abs/2020PhRvE.101f3306A/abstract). If you use this version please cite our paper, https://pubs.acs.org/doi/10.1021/acs.langmuir.1c03191, thanks!
 
 MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". Before calling this make sure to have the following in the parent directory:
 
