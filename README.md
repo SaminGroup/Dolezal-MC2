@@ -11,12 +11,11 @@ MC2 is intitialized by calling the begin_mc2.py script, "python3 begin_mc2.py". 
         4. Concatenated POTCAR1, POTCAR2,..., POTCARm files
         5. INCAR0/1 for the initial volume/position relaxation VASP calculation
         6. INCAR2 for the MC2-ISIF-3 calculations
-        7. INCAR-S for flipping away from singular states
-        8. KPOINTS
-        9. begin_mc2.py
-        10. mc2.py
-        11. mc2_global.py
-        12. myfuncs.py
+        7. KPOINTS
+        8. begin_mc2.py
+        9. mc2.py
+        10. mc2_global.py
+        11. myfuncs.py
 
 
 ### Unsure how to make the MC2 simulation cells? Please check out SaminGroup/Dolezal-MC2_simcells where you can easily make the simulation cells.  
