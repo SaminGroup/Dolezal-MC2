@@ -257,38 +257,34 @@ def enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T):
 
 
 
-def flip_and_lever(cells,singular):
+def flip_and_lever(cells,C):
 
     m = len(cells)
     #----------------------------------
     # Step 1: perform a flip
     #----------------------------------
-    chosen = []
-    copy_cells = copy.deepcopy(cells) # nested lists need deep copy
-    r = int(uniform(0,len(copy_cells))) # the random cell
-    r1 = int(uniform(0,len(copy_cells[r]))) # the random atom in cell r
-    flip_choice = [x for x in range(1,m+1) if x != copy_cells[r][r1][3]]
-    random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
-    copy_cells[r][r1][3] = random_flip
-    chosen.append(r1)
-    flipcount = len(chosen)
-    #----------------------------------------
-    # if we failed lever_check, flip 5 atoms
-    #----------------------------------------
-    if singular == 1:
-        Nflip = 5
-        while flipcount != Nflip+1:
+    singular = 1 ; cycle_count = 0
+    while singular == 1:
+        if cycle_count > 100:
+            return(cells, r, X, F, 1)
+        chosen = []
+        copy_cells = copy.deepcopy(cells) # nested lists need deep copy
+        r = int(uniform(0,len(copy_cells))) # the random cell
+        r1 = int(uniform(0,len(copy_cells[r]))) # the random atom in cell r
+        flip_choice = [x for x in range(1,m+1) if x != copy_cells[r][r1][3]]
+        random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
+        copy_cells[r][r1][3] = random_flip
+        chosen.append(r1)
+        flipcount = len(chosen)
+        #----------------------------------------
+        # if we failed lever_check, flip 5 atoms
+        #----------------------------------------
 
-            r1 = int(uniform(0,len(copy_cells[r]))) # the random atom in cell r
-            if r1 not in chosen:
-                flip_choice = [x for x in range(1,m+1) if x != copy_cells[r][r1][3]]
-                random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
-                copy_cells[r][r1][3] = random_flip
-                chosen.append(r1)
-            flipcount = len(chosen)
-
-
-    X = build_X(copy_cells)
+        X = build_X(copy_cells)
+        F = calc_f(X,C)
+        cycle_count += 1
+        if mofac_test(F) == 1:
+            singular = 0
 
     #---------------------------------
     # Step 2: update the state with the lever-approved flip
@@ -331,7 +327,7 @@ def flip_and_lever(cells,singular):
     with open('POSCAR', 'w') as f:
         f.writelines(lines)
     #--------------------------------
-    return(cells, r, X)
+    return(cells, r, X, F, 0)
 
 
 def intraswap(cells):
@@ -422,7 +418,7 @@ def formatter(alist):
 
 
 
-def global_flip(cells,singular):
+def global_flip(cells,C):
     """
     randomly flip one or more atoms in all cells simultaneously
     -----------------------------------------------------------
@@ -435,25 +431,27 @@ def global_flip(cells,singular):
 
     copy_cells = copy.deepcopy(cells)
     number_to_flip = 2
-    if singular == 1:
-        number_to_flip = 5
+    singular = 1
+    while singular == 1:
+        for i in range(m):
+            flipped = 0
+            options = [x for x in range(0,Natoms)]
+            selected = []
+            while flipped < number_to_flip:
+                the_selection = int(uniform(0,len(options)))
+                selected.append(options[the_selection])
+                options.remove(options[the_selection])
+                flipped += 1
 
-    for i in range(m):
-        flipped = 0
-        options = [x for x in range(0,Natoms)]
-        selected = []
-        while flipped < number_to_flip:
-            the_selection = int(uniform(0,len(options)))
-            selected.append(options[the_selection])
-            options.remove(options[the_selection])
-            flipped += 1
+            for atom in selected:
+                flip_choice = [x for x in range(1,m+1) if x != copy_cells[i][atom][3]]
+                random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
+                copy_cells[i][atom][3] = random_flip
 
-        for atom in selected:
-            flip_choice = [x for x in range(1,m+1) if x != copy_cells[i][atom][3]]
-            random_flip = flip_choice[int(uniform(0,len(flip_choice)))]
-            copy_cells[i][atom][3] = random_flip
-
-    X = build_X(copy_cells)
+        X = build_X(copy_cells)
+        F = calc_f(X_new,C)
+        if mofac_test(F) == 1:
+            singular = 0
 
 
     cells = copy_cells
@@ -490,7 +488,7 @@ def global_flip(cells,singular):
         with open('global_POSCAR{}'.format(r), 'w') as f:
             f.writelines(lines)
 
-    return(cells, X)
+    return(cells, X, F)
 
 def import_data(m):
 
@@ -522,9 +520,6 @@ def mofac_test(F):
             return(0)
         if f > 1.0:
             return(0)
-
-    if abs(sum(F)-1) >= 1e-5:
-        return(0)
 
     return(1)
 
@@ -786,6 +781,7 @@ def vasp_run(r,supcomp_phrase):
     #----------------------------------------------
     # Step 1: copy POTCAR{r} to POTCAR
     #----------------------------------------------
+    copyfile("INCAR2", "INCAR")
     copyfile('POTCAR{}'.format(cellnum), 'POTCAR')
     #----------------------------------------------
     # Step 2: run VASP
@@ -803,16 +799,14 @@ def vasp_run(r,supcomp_phrase):
     return(E,V)
 
 
-def global_vasp_run(m,supcomp_phrase,singular):
+def global_vasp_run(m,supcomp_phrase,step,singular):
     """
     for global flip we need to run and store all outputs until acceptance has
     been determined
     """
     E = []
     V = []
-    if singular == 1:
-        copyfile("INCAR-S","INCAR")
-
+    copyfile("INCAR2", "INCAR")
     for i in range(1,m+1):
         #-----------------------------------------------------
         # Step 1: the initial file to POSCAR and POTCAR for the VASP run
@@ -835,7 +829,6 @@ def global_vasp_run(m,supcomp_phrase,singular):
         #-----------------------------------------------------
         copyfile('CONTCAR', 'CONTCAR{}'.format(i))
         #-----------------------------------------------------
-    copyfile('INCAR2','INCAR')
     return(E,V)
 
 def build_X(cells):
