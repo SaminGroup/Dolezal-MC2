@@ -126,6 +126,9 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
             if intra_test == 1:
                 fun.local_potcar_update(m, names, r)
 
+            f = Flist[0]
+            Flist[1] = f # molar frac does not change on intraswap
+
         if intra_test == 1:
 
             states[1] = new_state
