@@ -8,6 +8,7 @@ I have updated all the preparation to be handled through a GUI, including the cr
 After executing the preparation script, execute the "begin.py" file to kick-off MC2.
 
 A. Note: Because VASP is executed differently depending on the system, the GUI is equipped to receive the vasp execution command for your particular system.
+
 B. Note: If you select the "continue" option from the GUI this will update the "begin.py" file accordingly. So if you want to launch MC2 from where it left off execute the prepare_mc2.py file, select continue, and then execute "begin.py" to kick-off MC2 in continue mode.
 
 I've also included data_to_csv.py as an example of how I analyzed the MC2 results. This file generates a CSV file which holds all of the MC data. It also generates plots of the data. There are a few user inputs and I've listed an example below,
