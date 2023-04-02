@@ -61,8 +61,8 @@ while True:
                 break
 
             if begin_values['simcells']:
-                if not os.path.exists('potcars'):
-                    os.makedirs('potcars')
+                if not os.path.exists('potcar'):
+                    os.makedirs('potcar')
                 simcell_window = sg.Window("Simcell Generator", simcell_layout)
 
                 while True:
