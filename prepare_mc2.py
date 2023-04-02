@@ -50,6 +50,9 @@ while True:
 
     if event == "Begin New Run":
 
+        if not os.path.exists('data'):
+            os.makedirs('data')
+
         begin_window = sg.Window("Begin Run Options", begin_layout)
         while True:
             begin_event, begin_values = begin_window.read()
