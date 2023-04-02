@@ -17,10 +17,10 @@ def potcar(names,opsys):
 
     if opsys == "windows":
         beginning = 'type '
-        file_name = ' potcars\{}_POTCAR'
+        file_name = ' potcar\{}_POTCAR'
     else:
         beginning = 'cat '
-        file_name = ' potcars/{}_POTCAR'
+        file_name = ' potcar/{}_POTCAR'
 
     for i in range(m):
         ending = ' > POTCAR{}'.format(i+1)
