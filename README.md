@@ -7,6 +7,12 @@ I have updated all the preparation to be handled through a GUI, including the cr
 
 Note: Because VASP is executed differently depending on the system, the GUI is equipped to receive the vasp execution command for your particular system.
 
+##Here is a quick video on preparing for a new MC2 run
+https://user-images.githubusercontent.com/47109396/229328390-04ecf2d2-a143-4cf1-b562-6bb6c5759e89.mov
+
+##Here is a video for a continuation run
+
+
 I've also included data_to_csv.py as an example of how I analyzed the MC2 results. This file generates a CSV file which holds all of the MC data. It also generates plots of the data. There are a few user inputs and I've listed an example below,
 
 Please list the species in order as found in the POSCAR: Al Nb Ta Ti Zr
