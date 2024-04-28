@@ -89,25 +89,9 @@ while True:
                         else:
                             N = 48
 
-                        A = C*np.ones((m,m))
-                        b = C*N*np.ones(m,)
-                        x = gmres(A.T,b)[0]
-                        x = np.array([int(j) for j in x])
-
-                        # atom count for each cell is set to indices of X vector
-                        typecount = []
-                        for i in range(m):
-                            typecount.append([])
-                            for j in range(m):
-                                typecount[i].append(int(x[j]))
-                            if sum(typecount[i]) != N:
-                                add = N-sum(x)
-                                select = int(uniform(0,m))
-                                typecount[i][select] += add
-
                         genpot = sim_values[6]
 
-                        poscar(N,m,typecount,names,opsys,genpot)
+                        poscar(N,C,names,opsys,genpot)
 
                         sg.Popup('Simcells are generated!')
                         break
