@@ -2,7 +2,7 @@ import ase.io.vasp
 import numpy as np
 from ase.build import bulk
 from random import uniform
-import src.simcell_funcs as fun
+import simcell_funcs as fun
 from scipy.sparse.linalg import gmres
 
 
@@ -20,11 +20,7 @@ dims48 = {
 'hcp' : (2,2,3)
 }
 
-def poscar(Natoms, C, names, opsys, genpot):
-    Ncells = len(C)
-
-    X = fun.generate_initial_X(C, Natoms)
-
+def poscar(Natoms, Ncells, typecount, names, opsys, genpot):
     for i in range(Ncells):
         try:
             cell = bulk(names[i],cubic=True)
@@ -60,29 +56,18 @@ def poscar(Natoms, C, names, opsys, genpot):
 
         if genpot:
             fun.potcar(names,opsys)
-
-        if sum(X[:,i]) < N:
-            add = N-sum(X[:,i])
-            select = int(uniform(0,Ncells))
-            X[select,i] += add
-
-        if sum(X[:,i]) > N:
-            add = sum(X[:,i])-N
-            select = int(uniform(0,Ncells))
-            X[select,i] += add
-
         lines[5] = (' '.join(names)+'\n')
-        lines[6] = fun.formatter(X[:,i])
+        lines[6] = fun.formatter(typecount[i])
         with open('POSCAR{}'.format(i+1), 'w') as f:
             f.writelines(lines)
 
-'''
+
 print("\n --------------------- User Inputs ---------------------")
 opsys = input(" 1. Op. System (windows, linux, unix)? ")
 names = input(" 2. Species Names (Au Pt Zr Ti etc)? ").split()
 m = len(names)
 
-C = np.asarray(input(" 3. Total system concentration? ").split(),dtype=float)
+C = np.asarray(input(" 3. Total system concentration (e.g., 0.5, 0.5)? ").split(),dtype=float)
 
 N = int(input(" 5. How many atoms total per sim cell (32 or 48)? "))
 
@@ -91,6 +76,8 @@ b = C*N*np.ones(m,)
 x = gmres(A.T,b)[0]
 x = np.array([int(j) for j in x])
 
+print(A,b)
+print(x)
 # atom count for each cell is set to indices of X vector
 typecount = []
 for i in range(m):
@@ -120,4 +107,3 @@ for i in range(m):
     else:
         print(" ---- Generated POSCAR{}".format(i+1))
 print(" ----------------------- procedure complete -----------------------")
-'''
