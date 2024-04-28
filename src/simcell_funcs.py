@@ -1,3 +1,4 @@
+import numpy as np
 import os
 
 
@@ -13,14 +14,12 @@ def potcar(names,opsys):
     He, Li, Au, etc
     """
     m = len(names)
-
+    file_name = ' potcars\{}_POTCAR'
 
     if opsys == "windows":
         beginning = 'type '
-        file_name = ' potcar\{}_POTCAR'
     else:
         beginning = 'cat '
-        file_name = ' potcar/{}_POTCAR'
 
     for i in range(m):
         ending = ' > POTCAR{}'.format(i+1)
@@ -37,3 +36,29 @@ def formatter(alist):
     space1 = " "
     newline = '  '.join(str(num) for num in alist)+"\n"
     return(newline)
+
+
+def generate_initial_X(C, Natoms):
+    # Number of species
+    num_species = len(C)
+
+    # Generate a random initial X matrix
+    X = np.random.rand(num_species, num_species)
+
+    # Normalize X to get the atomic percents
+    X = X / np.sum(X, axis=0)
+
+    # Calculate molar fraction matrix F
+    F = np.linalg.lstsq(X, C, rcond=None)[0]
+
+    # Calculate the actual concentration from F
+    actual_C = np.dot(X, F)
+
+    # Adjust X to match the user-defined concentration C
+    X *= (C / actual_C)
+
+    scaled_X = X*48
+
+    X = np.round(scaled_X).astype(int)
+
+    return X
