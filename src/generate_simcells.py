@@ -20,7 +20,10 @@ dims48 = {
 'hcp' : (2,2,3)
 }
 
-def poscar(Natoms, Ncells, typecount, names, opsys, genpot):
+def poscar(Natoms, C, names, opsys, genpot):
+    Ncells = len(C)
+
+    X = fun.generate_initial_X(C, Natoms)
 
     for i in range(Ncells):
         try:
@@ -57,8 +60,19 @@ def poscar(Natoms, Ncells, typecount, names, opsys, genpot):
 
         if genpot:
             fun.potcar(names,opsys)
+
+        if sum(X[:,i]) < N:
+            add = N-sum(X[:,i])
+            select = int(uniform(0,Ncells))
+            X[select,i] += add
+
+        if sum(X[:,i]) > N:
+            add = sum(X[:,i])-N
+            select = int(uniform(0,Ncells))
+            X[select,i] += add
+
         lines[5] = (' '.join(names)+'\n')
-        lines[6] = fun.formatter(typecount[i])
+        lines[6] = fun.formatter(X[:,i])
         with open('POSCAR{}'.format(i+1), 'w') as f:
             f.writelines(lines)
 
