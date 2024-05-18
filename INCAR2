@@ -15,7 +15,7 @@ general:
   NELMIN = 8
   POTIM = 0.1
   ISYM = 0
-  NCORE = 24
+  NCORE = 24 # Please optimize this TAG to your HPC's architecture!
   LREAL = Auto
   LWAVE = .FALSE.
   LCHARG = .FALSE.
