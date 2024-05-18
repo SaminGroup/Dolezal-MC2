@@ -1,7 +1,7 @@
 import os
 import copy
 import numpy as np
-import myfuncs as fun
+import src.myfuncs as fun
 from random import uniform
 from shutil import copyfile
 
