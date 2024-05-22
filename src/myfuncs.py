@@ -449,7 +449,7 @@ def global_flip(cells,C):
                 copy_cells[i][atom][3] = random_flip
 
         X = build_X(copy_cells)
-        F = calc_f(X_new,C)
+        F = calc_f(X,C)
         if mofac_test(F) == 1:
             singular = 0
 
