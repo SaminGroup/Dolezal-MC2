@@ -799,7 +799,7 @@ def vasp_run(r,supcomp_phrase):
     return(E,V)
 
 
-def global_vasp_run(m,supcomp_phrase,step,singular):
+def global_vasp_run(m,supcomp_phrase,step):
     """
     for global flip we need to run and store all outputs until acceptance has
     been determined
