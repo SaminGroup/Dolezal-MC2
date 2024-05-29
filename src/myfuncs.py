@@ -15,7 +15,7 @@ def acceptance(dH, dV, dX):
     plugs the enthalpy and volume change into the exponential and checks it
     against a random number between 0 and 1
     """
-    equation = np.exp(-dH + dV) # + dX)
+    equation = np.exp(-dH + dV + dX)
     choice = min(equation,1)
     r = uniform(0,1)
     if r < choice:
@@ -27,7 +27,8 @@ def acceptance(dH, dV, dX):
 def atomic_percents(X, xdata):
     """
     xdata = [[cell 1], [cell 2], ..., [cell m]]
-    cell 1 = [[type 1], [type 2], ..., [type m-1]]
+    cell 1 = [[type 1], [type 2], ...
+    , [type m-1]]
     """
     m = len(X[0])
     for i in range(m):
@@ -249,7 +250,7 @@ def enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T):
                 dX_term2.append(0)
 
 
-    dH = (m*B)*(sum(dH_term1)-sum(dH_term2))
+    dH = (B)*(sum(dH_term1)-sum(dH_term2))
     dV = N*sum(dV)
     dX = N*(sum(dX_term1) - sum(dX_term2))
 
