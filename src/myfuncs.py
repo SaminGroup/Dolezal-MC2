@@ -249,7 +249,7 @@ def enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T):
                 dX_term2.append(0)
 
 
-    dH = (m*B)*(sum(dH_term1)-sum(dH_term2))
+    dH = (B)*(sum(dH_term1)-sum(dH_term2))
     dV = N*sum(dV)
     dX = N*(sum(dX_term1) - sum(dX_term2))
 
