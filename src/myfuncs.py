@@ -880,11 +880,41 @@ def calc_f(X,C):
     result = p.solve(solver=cp.ECOS)
     f = f.value
     return(f)
-"""
+
 def calc_f(X,C):
     f = gmres(X,C,tol = 1e-8)[0]
     return(f)
+"""
 
+from scipy.linalg import qr, solve_triangular
+
+def calc_f(X,C):
+    
+    epsilon = 1e-8
+    fluctuation = 1e-4
+    # Add regularization to X
+    n = X.shape[0]
+    F_list = []
+    
+    for _ in range(500):
+        # Introduce small random fluctuations to C
+        C_fluctuated = C + np.random.uniform(-fluctuation, fluctuation, size=C.shape)
+        
+        # Regularize X matrix
+        X_reg = X + epsilon * np.eye(n)
+        
+        # QR decomposition
+        Q, R = qr(X_reg)
+        
+        # Solve R*F = Q^T*C_fluctuated
+        QTC = np.dot(Q.T, C_fluctuated)
+        F = solve_triangular(R, QTC)
+        F_list.append(F)
+    
+    # Average the results
+    f = np.mean(F_list, axis=0)
+
+    return(f)
 
 def lever_check(X,f,C,step):
     new_c = X@f
