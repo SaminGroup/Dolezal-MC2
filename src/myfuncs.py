@@ -896,7 +896,7 @@ def calc_f(X,C):
     n = X.shape[0]
     F_list = []
     
-    for _ in range(500):
+    for _ in range(100):
         # Introduce small random fluctuations to C
         C_fluctuated = C + np.random.uniform(-fluctuation, fluctuation, size=C.shape)
         
