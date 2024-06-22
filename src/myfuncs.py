@@ -869,34 +869,12 @@ def build_X(cells):
 
     return(np.array(X))
 
-"""
-def calc_f(X,C):
-    '''
-    given the matrix, X, and the vector c, find f, the molar fraction of
-    species A and B by solving the matrix equation
-
-    X--> ratio of each species in each cell compared to total number of atoms in
-         each cell
-
-    C--> the concentration of each species in the whole system (must remain
-         constant)
-    '''
-    f = cp.Variable(X.shape[1])
-    p = cp.Problem(cp.Minimize(cp.sum_squares(X@f-C)),[sum(f) == 1,f <= 1, f >= 0])
-    result = p.solve(solver=cp.ECOS)
-    f = f.value
-    return(f)
-
-def calc_f(X,C):
-    f = gmres(X,C,tol = 1e-8)[0]
-    return(f)
-"""
 
 from scipy.linalg import qr, solve_triangular
 
 def calc_f(X,C):
     
-    epsilon = 1e-8
+    epsilon = 1e-4
     fluctuation = 1e-4
     # Add regularization to X
     n = X.shape[0]
