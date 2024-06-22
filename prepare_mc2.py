@@ -107,7 +107,7 @@ while True:
                                 select = int(uniform(0,m))
                                 typecount[i][select] += add
                         
-                        num_swaps = int(4**4)
+                        num_swaps = int(4**3)
                         
                         for _ in range(num_swaps):
                             cell1, cell2 = np.random.choice(m, 2, replace=False)
