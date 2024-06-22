@@ -76,8 +76,6 @@ b = C*N*np.ones(m,)
 x = gmres(A.T,b)[0]
 x = np.array([int(j) for j in x])
 
-print(A,b)
-print(x)
 # atom count for each cell is set to indices of X vector
 typecount = []
 for i in range(m):
@@ -89,6 +87,23 @@ for i in range(m):
         select = int(uniform(0,m))
         typecount[i][select] += add
 
+
+num_swaps = int(4**3)
+
+for _ in range(num_swaps):
+    cell1, cell2 = np.random.choice(Ncells, 2, replace=False)
+    type1, type2 = np.random.choice(len(names), 2, replace=False)
+    
+    # Swap one species with another in one cell
+    if typecount[cell1][type1] > 0 and typecount[cell2][type2] > 0:
+        typecount[cell1][type1] -= 1
+        typecount[cell1][type2] += 1
+    
+    # Reverse the swap in another cell
+    if typecount[cell2][type2] > 0:
+        typecount[cell2][type2] -= 1
+        typecount[cell2][type1] += 1
+        
 
 genpot = input(" 6. Generate POTCARs (y or n)? ")
 
