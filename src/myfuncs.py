@@ -223,38 +223,44 @@ def global_data_update(f, mofac, E_data, elist, V_data, vlist):
 
 
 def enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T):
-    kT = 0.025851*(T/300)
+    k = 8.617333262145e-5  # Boltzmann constant in eV/K
+    kT = k * T
     B = 1 / kT
 
     f0 = Flist[0]
     f = Flist[1]
 
-    dH_term1 = []
-    dH_term2 = []
-    dV = []
-    dX_term1 = []
-    dX_term2 = []
-    for i in range(m):
-        dH_term1.append((E[i][1]*f[i]))
-        dH_term2.append((E[i][0]*f0[i]))
-        dV.append(f[i]*log(V[i][1]) - f0[i]*log(V[i][0]))
-        for j in range(m):
-            if X_new[j][i] != 0.0:
-                dX_term1.append(f[i]*(X_new[j][i]*log(X_new[j][i])))
-            else:
-                dX_term1.append(0)
+    dH_term1 = np.array([E[i][1] * f[i] for i in range(m)])
+    dH_term2 = np.array([E[i][0] * f0[i] for i in range(m)])
 
-            if X[j][i] != 0.0:
-                dX_term2.append(f0[i]*(X[j][i]*log(X[j][i])))
-            else:
-                dX_term2.append(0)
+    dV_before = np.array([
+        N * f0[i] * np.log(N * f0[i] * V[i][0]) if f0[i] > 0 else 0
+        for i in range(m)
+    ])
+    dV_after = np.array([
+        N * f[i] * np.log(N * f[i] * V[i][1]) if f[i] > 0 else 0
+        for i in range(m)
+    ])
 
+    dX_term1_before = np.array([
+        N * f0[i] * X[j, i] * np.log(N * f0[i] * X[j, i]) - N * f0[i] * X[j, i]
+        if X[j, i] > 0 and f0[i] > 0 else 0
+        for i in range(m) for j in range(m)
+    ])
+    dX_term1_after = np.array([
+        N * f[i] * X_new[j, i] * np.log(N * f[i] * X_new[j, i]) - N * f[i] * X_new[j, i]
+        if X_new[j, i] > 0 and f[i] > 0 else 0
+        for i in range(m) for j in range(m)
+    ])
+    
+    
+    dX = np.sum(dX_term1_after) - np.sum(dX_term1_before)
+    
+    dV = np.sum(dV_after) - np.sum(dV_before)
 
-    dH = (m*B)*(sum(dH_term1)-sum(dH_term2))
-    dV = N*sum(dV)
-    dX = N*(sum(dX_term1) - sum(dX_term2))
+    dH = (N * B) * (np.sum(dH_term1) - np.sum(dH_term2))
 
-    return(dH,dV,dX)
+    return dH, dV, dX
 
 
 
