@@ -106,7 +106,23 @@ while True:
                                 add = N-sum(x)
                                 select = int(uniform(0,m))
                                 typecount[i][select] += add
-
+                        
+                        num_swaps = int(4**4)
+                        
+                        for _ in range(num_swaps):
+                            cell1, cell2 = np.random.choice(m, 2, replace=False)
+                            type1, type2 = np.random.choice(m, 2, replace=False)
+                            
+                            # Swap one species with another in one cell
+                            if typecount[cell1][type1] > 0 and typecount[cell2][type2] > 0:
+                                typecount[cell1][type1] -= 1
+                                typecount[cell1][type2] += 1
+                            
+                            # Reverse the swap in another cell
+                            if typecount[cell2][type2] > 0:
+                                typecount[cell2][type2] -= 1
+                                typecount[cell2][type1] += 1
+                        
                         poscar(N,m,typecount,names,opsys,genpot)
 
                         sg.Popup('Simcells are generated!')
