@@ -7,7 +7,6 @@ from math import log
 from random import uniform
 from shutil import copyfile
 from numpy.linalg import norm
-from scipy.sparse.linalg import gmres
 
 
 def acceptance(dH, dV, dX):
@@ -222,44 +221,61 @@ def global_data_update(f, mofac, E_data, elist, V_data, vlist):
 
 
 
-def enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T):
+def enthalpy_and_volume(E, V, X, X_new, Flist, m, n, T):
     k = 8.617333262145e-5  # Boltzmann constant in eV/K
     kT = k * T
     B = 1 / kT
+    
+    N = n*m
 
     f0 = Flist[0]
     f = Flist[1]
+    
+    # Energy terms, loop over phases (nu)
+    dH_term1 = np.array(N * [E[i][1] * (f[i] / n) for i in range(m)])
+    dH_term2 = np.array(N * [E[i][0] * (f0[i] / n) for i in range(m)])
 
-    dH_term1 = np.array([E[i][1] * f[i] for i in range(m)])
-    dH_term2 = np.array([E[i][0] * f0[i] for i in range(m)])
+    # Initialize the terms
+    dV_before = 0.0
+    dV_after = 0.0
 
-    dV_before = np.array([
-        N * f0[i] * np.log(N * f0[i] * V[i][0]) if f0[i] > 0 else 0
-        for i in range(m)
-    ])
-    dV_after = np.array([
-        N * f[i] * np.log(N * f[i] * V[i][1]) if f[i] > 0 else 0
-        for i in range(m)
-    ])
+    # Compute dV_before
+    for i in range(m):  # Loop over phases (nu)
+        if f0[i] > 0:
+            term = N * f0[i] * np.log(V[i][0] / n)
+            dV_before += term
 
-    dX_term1_before = np.array([
-        N * f0[i] * X[j, i] * np.log(N * f0[i] * X[j, i]) - N * f0[i] * X[j, i]
-        if X[j, i] > 0 and f0[i] > 0 else 0
-        for i in range(m) for j in range(m)
-    ])
-    dX_term1_after = np.array([
-        N * f[i] * X_new[j, i] * np.log(N * f[i] * X_new[j, i]) - N * f[i] * X_new[j, i]
-        if X_new[j, i] > 0 and f[i] > 0 else 0
-        for i in range(m) for j in range(m)
-    ])
+    # Compute dV_after
+    for i in range(m):  # Loop over phases (nu)
+        if f[i] > 0:
+            term = N * f[i] * np.log(V[i][1] / n)
+            dV_after += term
+    
+    # Initialize the terms
+    dX_before = 0.0
+    dX_after = 0.0
+
+    # Compute dX_before
+    for i in range(m):  # Loop over phases (nu)
+        for j in range(m):  # Loop over species (j)
+            if X[j, i] > 0 and f0[i] > 0:
+                term = N * f0[i] * X[j, i] * np.log(X[j, i])
+                dX_before += term
+
+    # Compute dX_after
+    for i in range(m):  # Loop over phases (nu)
+        for j in range(m):  # Loop over species (j)
+            if X_new[j, i] > 0 and f[i] > 0:
+                term = N * f[i] * X_new[j, i] * np.log(X_new[j, i])
+                dX_after += term
     
     
-    dX = np.sum(dX_term1_after) - np.sum(dX_term1_before)
+    dX = dX_after - dX_before
     
-    dV = np.sum(dV_after) - np.sum(dV_before)
-
-    dH = (N * B) * (np.sum(dH_term1) - np.sum(dH_term2))
-
+    dV = dV_after - dV_before
+    
+    dH = (B) * (np.sum(dH_term1) - np.sum(dH_term2))
+    
     return dH, dV, dX
 
 
