@@ -1,11 +1,9 @@
-import os
 import copy
 import numpy as np
 import src.myfuncs as fun
 from random import uniform
-from shutil import copyfile
 
-def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
+def mc2(step_limit, C_set, T, param, intra, supcomp_phrase):
     """
     performs the overall mc2 loop
 
@@ -16,9 +14,10 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
     intra --> True or False, to perform intraswaps
     supcomp_phrase --> how vasp is called on supercomputer
     """
-
-    cells, names, N = fun.create_cells(Ncells)
-    m = Ncells
+    C = C_set
+    m = len(C)
+    cells, names, N = fun.create_cells(m)
+    
 
     if param == "begin":
 

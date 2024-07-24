@@ -314,6 +314,9 @@ def flip_and_lever(cells,C):
     singular = 1 ; cycle_count = 0
     while singular == 1:
         if cycle_count > 100:
+            r = 0
+            X = build_X(cells)
+            F = calc_f(X,C)
             return(cells, r, X, F, 1)
         chosen = []
         copy_cells = copy.deepcopy(cells) # nested lists need deep copy
@@ -915,8 +918,11 @@ from scipy.linalg import qr, solve_triangular
 
 def calc_f(X,C):
     
-    epsilon = 1e-4
-    fluctuation = 1e-4
+    n = np.loadtxt('data/atoms_per_cell')
+    
+    X_T = X*n
+    C_T = C*n
+    fluctuation = 1e-2 # relax the concentration by up to 1/4 of a percent
     # Add regularization to X
     n = X.shape[0]
     F_list = []
@@ -925,11 +931,8 @@ def calc_f(X,C):
         # Introduce small random fluctuations to C
         C_fluctuated = C + np.random.uniform(-fluctuation, fluctuation, size=C.shape)
         
-        # Regularize X matrix
-        X_reg = X + epsilon * np.eye(n)
-        
         # QR decomposition
-        Q, R = qr(X_reg)
+        Q, R = qr(X)
         
         # Solve R*F = Q^T*C_fluctuated
         QTC = np.dot(Q.T, C_fluctuated)
@@ -938,7 +941,18 @@ def calc_f(X,C):
     
     # Average the results
     f = np.mean(F_list, axis=0)
-
+    '''
+    try:
+        
+        f = np.linalg.solve(X_T,C_T)       
+    
+    except:
+        
+        f = gmres(X_T,C_T, tol=1e-12)[0]
+    '''
+    
+    f = f/np.sum(f) # normalize f
+    
     return(f)
 
 def lever_check(X,f,C,step):
