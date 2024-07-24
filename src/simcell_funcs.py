@@ -21,9 +21,10 @@ def build_X(unique_atomic_symbols, r=None):
 
     """
 
-
+    m = len(unique_atomic_symbols)
     sim_cells = glob("POSCAR[0-9]")
     sim_cells.sort(key=lambda x: int(''.join(filter(str.isdigit, x))))
+    sim_cells = sim_cells[:m]
 
     each_row = []
     for acell in sim_cells:

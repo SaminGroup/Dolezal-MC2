@@ -141,7 +141,6 @@ def poscar(C, names, shapes, Natoms, genpot, opsys):
         F = fun.calc_f(X,C)
         
         if fun.mofac_test(F) == 1:
-            singular = 0
             break
         print('Avoiding Singular State')
     

@@ -1,21 +1,19 @@
 import os
 import re
-import csv
 import copy
 import numpy as np
 from math import log
 from random import uniform
 from shutil import copyfile
-from numpy.linalg import norm
 
 
-def acceptance(dG, cost):
+def acceptance(dG, cost, w):
     """
     plugs the enthalpy and volume change into the exponential and checks it
     against a random number between 0 and 1
     """
     
-    w = 0.60
+    
     # I take care of 1/kT in the dG calculation
     equation = exp(-(dG*(1-w) + (w/2)*cost))
     choice = min(equation,1)

@@ -3,7 +3,7 @@ import numpy as np
 import src.myfuncs as fun
 from random import uniform
 
-def mc2(step_limit, C_set, T, param, intra, supcomp_phrase):
+def mc2(step_limit, C_set, T, w, param, intra, supcomp_phrase):
     """
     performs the overall mc2 loop
 
@@ -152,7 +152,7 @@ def mc2(step_limit, C_set, T, param, intra, supcomp_phrase):
             # Step 4: calculate the change dH,dV for the acceptance
             #-----------------------------------------------
             dG, cost = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
-            accept = fun.acceptance(dG,cost)
+            accept = fun.acceptance(dG,cost,w)
 
 
         else:
