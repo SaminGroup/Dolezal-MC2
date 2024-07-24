@@ -1,8 +1,6 @@
 import os
 import numpy as np
 import PySimpleGUI as sg
-from random import uniform
-from scipy.sparse.linalg import gmres
 from src.generate_simcells import poscar
 
 sg.theme("Black")
@@ -30,6 +28,7 @@ simcell_layout = [
         [sg.Checkbox('Windows'), sg.Checkbox('Linux/Unix')],
         [sg.Text('System to be Explored (i.e., Au Pt): '), sg.InputText(size=(10,1))],
         [sg.Text('System Concentrations (i.e., 0.5 0.5): '), sg.InputText(size=(15,1))],
+        [sg.Text('Initial Crystal Structures (i.e., fcc bcc hcp ...): '), sg.InputText(size=(15,1))],
         [sg.Checkbox('32 Atom Cell', default=False), sg.Checkbox('48 Atom Cell', default=False), sg.Checkbox('Generate POTCARs', default=False)],
         [sg.Button('Run Script'), sg.Button('Exit')]
 ]
@@ -76,54 +75,27 @@ while True:
                             opsys = 'windows'
                         else:
                             opsys = 'linux'
-
+                        
+                        
                         names = sim_values[2].split()
 
                         m = len(names)
 
-
                         C = np.asarray(str(sim_values[3]).split(),dtype=float)
+                        
+                        shapes = sim_values[4].split()
+                        
+                        #grab the location of the most prominent species
+                        max_index = list(C).index(max(C))
 
-                        if sim_values[4] == True:
+                        if sim_values[5] == True:
                             N = 32
                         else:
                             N = 48
 
-                        genpot = sim_values[6]
-
-                        A = C*np.ones((m,m))
-                        b = C*N*np.ones(m,)
-                        x = gmres(A.T,b)[0]
-                        x = np.array([int(j) for j in x])
+                        genpot = sim_values[7]
                         
-                        # atom count for each cell is set to indices of X vector
-                        typecount = []
-                        for i in range(m):
-                            typecount.append([])
-                            for j in range(m):
-                                typecount[i].append(int(x[j]))
-                            if sum(typecount[i]) != N:
-                                add = N-sum(x)
-                                select = int(uniform(0,m))
-                                typecount[i][select] += add
-                        
-                        num_swaps = int(4**3)
-                        
-                        for _ in range(num_swaps):
-                            cell1, cell2 = np.random.choice(m, 2, replace=False)
-                            type1, type2 = np.random.choice(m, 2, replace=False)
-                            
-                            # Swap one species with another in one cell
-                            if typecount[cell1][type1] > 0 and typecount[cell2][type2] > 0:
-                                typecount[cell1][type1] -= 1
-                                typecount[cell1][type2] += 1
-                            
-                            # Reverse the swap in another cell
-                            if typecount[cell2][type2] > 0:
-                                typecount[cell2][type2] -= 1
-                                typecount[cell2][type1] += 1
-                        
-                        poscar(N,m,typecount,names,opsys,genpot)
+                        poscar(C, names, shapes, N, genpot, opsys)
 
                         sg.Popup('Simcells are generated!')
                         break
