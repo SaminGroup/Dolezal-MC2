@@ -16,6 +16,7 @@ begin_layout = [
     [sg.Checkbox('Generate Simcells',key='simcells'), sg.Checkbox('Perform Intraswaps', key='intraswap')],
     [sg.Text('MC Step Limit'), sg.Input(size=(5,1)), sg.Text('Temperature (K)'), sg.Input(size=(5,1))],
     [sg.Text('System command to execute VASP (i.e., vasp or mpirun vasp)'), sg.Input(size=(10,1))],
+    [sg.Text('Energetic penalty term for (1-w) + w/2 logic (i.e., 0.60)'), sg.Input(size=(10,1))],
     [sg.Button('Run Script'), sg.Button('Exit')]
 ]
 
@@ -123,12 +124,12 @@ while True:
                     f.close()
 
 
-                lines[1] = 'step_limit = {}\n'.format(begin_values[0])
-                lines[2] = 'Ncells = {}\n'.format(m)
+                lines[2] = 'step_limit = {}\n'.format(begin_values[0])
                 lines[3] = 'T = {}\n'.format(begin_values[1])
                 lines[4] = "param = 'begin'\n"
                 lines[5] = "supcomp_phrase = '{}'\n".format(begin_values[2])
                 lines[6] = "intra = {}\n".format(begin_values['intraswap'])
+                lines[7] = "w = {}\n".format(begin_values[3])
 
                 with open('begin.py', 'w') as f:
                     f.writelines(lines)
@@ -151,7 +152,7 @@ while True:
                     lines = f.readlines()
                     f.close()
 
-                lines[1] = 'step_limit = {}\n'.format(con_values[0])
+                lines[2] = 'step_limit = {}\n'.format(con_values[0])
                 lines[4] = "param = 'continue'\n"
 
                 with open('begin.py', 'w') as f:
