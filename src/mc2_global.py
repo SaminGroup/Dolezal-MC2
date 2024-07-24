@@ -152,8 +152,8 @@ def mc2(step_limit, Ncells, T, param, intra, supcomp_phrase):
             #-----------------------------------------------
             # Step 4: calculate the change dH,dV for the acceptance
             #-----------------------------------------------
-            dH,dV,dX = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
-            accept = fun.acceptance(dH, dV, dX)
+            dG, cost = fun.enthalpy_and_volume(E, V, X, X_new, Flist, m, N, T)
+            accept = fun.acceptance(dG,cost)
 
 
         else:
