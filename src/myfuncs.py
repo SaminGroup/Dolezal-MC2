@@ -9,14 +9,20 @@ from shutil import copyfile
 from numpy.linalg import norm
 
 
-def acceptance(dH, dV, dX):
+def acceptance(dG, cost):
     """
     plugs the enthalpy and volume change into the exponential and checks it
     against a random number between 0 and 1
     """
-    equation = np.exp(-dH + dV + dX)
+    
+    w = 0.60
+    # I take care of 1/kT in the dG calculation
+    equation = exp(-(dG*(1-w) + (w/2)*cost))
     choice = min(equation,1)
-    r = uniform(0,1)
+    
+    # Generate a random number between 0 and 1
+    r = np.random.uniform(0, 1)
+        
     if r < choice:
         return(1)
     else:
@@ -219,64 +225,83 @@ def global_data_update(f, mofac, E_data, elist, V_data, vlist):
     return([mofac, E_data, V_data])
 
 
+# High precision floating-point library
+from mpmath import mp, log, exp
+# Set the precision to 25 decimal places
+mp.dps = 25
 
 
 def enthalpy_and_volume(E, V, X, X_new, Flist, m, n, T):
     k = 8.617333262145e-5  # Boltzmann constant in eV/K
     kT = k * T
     B = 1 / kT
-    
     N = n*m
-
+    # E = [[e_i, e_f], [e_i, e_f]] for cell 1 and cell 2
     f0 = Flist[0]
     f = Flist[1]
     
-    # Energy terms, loop over phases (nu)
-    dH_term1 = np.array(N * [E[i][1] * (f[i] / n) for i in range(m)])
-    dH_term2 = np.array(N * [E[i][0] * (f0[i] / n) for i in range(m)])
-
+    dH_before = 0.0
+    dH_after = 0.0
+    
+    dH_cost_before = 0.0
+    dH_cost_after = 0.0
+    
+    for i in range(m):
+        dH_before += float(E[i][0]) * float(f0[i])
+        dH_after += float(E[i][1]) * float(f[i])
+        
+        dH_cost_before += float(E[i][0])
+        dH_cost_after += float(E[i][1])
+    
     # Initialize the terms
-    dV_before = 0.0
-    dV_after = 0.0
-
+    dV_before = mp.mpf('0.0')
+    dV_after = mp.mpf('0.0')
     # Compute dV_before
     for i in range(m):  # Loop over phases (nu)
         if f0[i] > 0:
-            term = N * f0[i] * np.log(V[i][0] / n)
-            dV_before += term
+            dv_term = N * float(f0[i]) * log(float(V[i][0]) / n)
+            dV_before += dv_term
 
     # Compute dV_after
     for i in range(m):  # Loop over phases (nu)
         if f[i] > 0:
-            term = N * f[i] * np.log(V[i][1] / n)
-            dV_after += term
+            dv_term = N * float(f[i]) * log(float(V[i][1]) / n)
+            dV_after += dv_term
     
-    # Initialize the terms
+    
     dX_before = 0.0
     dX_after = 0.0
-
+    
     # Compute dX_before
-    for i in range(m):  # Loop over phases (nu)
-        for j in range(m):  # Loop over species (j)
-            if X[j, i] > 0 and f0[i] > 0:
-                term = N * f0[i] * X[j, i] * np.log(X[j, i])
-                dX_before += term
+    for j in range(m):  # Loop over phases (nu)
+        N_f0 = float(N) * float(f0[j])
+        for i in range(m):  # Loop over species (i)
+            if X[i, j] > 0 and f0[j] > 0:
+                dx_term_before = N_f0 * float(X[i, j]) * log(float(X[i, j])) - N_f0 * float(X[i, j])
+                dX_before += dx_term_before
+             
 
     # Compute dX_after
-    for i in range(m):  # Loop over phases (nu)
-        for j in range(m):  # Loop over species (j)
-            if X_new[j, i] > 0 and f[i] > 0:
-                term = N * f[i] * X_new[j, i] * np.log(X_new[j, i])
-                dX_after += term
+    for j in range(m):  # Loop over phases (nu)
+        N_f = mp.mpf(float(N)) * mp.mpf(float(f[j]))
+        for i in range(m):  # Loop over species (i)
+            if X_new[i, j] > 0 and f[j] > 0:
+                dx_term_after = N_f * float(X_new[i, j]) * log(float(X_new[i, j])) - N_f * float(X_new[i, j])
+                dX_after += dx_term_after
     
     
     dX = dX_after - dX_before
     
     dV = dV_after - dV_before
+        
+    # reduced values comes to this expression (N = n.m and u = U/n)
+    dH = (m * B) * (dH_after - dH_before)
     
-    dH = (B) * (np.sum(dH_term1) - np.sum(dH_term2))
+    dH_cost = (m * B) * (dH_cost_after - dH_cost_before)
+    # reduce the entropic contribution by a factor of dH_cost
+    dG = dH - dV - dX
     
-    return dH, dV, dX
+    return dG, dH_cost
 
 
 
