@@ -922,32 +922,28 @@ def calc_f(X,C):
     C_T = C*n
     fluctuation = 1e-2 # relax the concentration by up to 1/4 of a percent
     # Add regularization to X
-    n = X.shape[0]
-    F_list = []
-    
-    for _ in range(100):
-        # Introduce small random fluctuations to C
-        C_fluctuated = C + np.random.uniform(-fluctuation, fluctuation, size=C.shape)
-        
-        # QR decomposition
-        Q, R = qr(X)
-        
-        # Solve R*F = Q^T*C_fluctuated
-        QTC = np.dot(Q.T, C_fluctuated)
-        F = solve_triangular(R, QTC)
-        F_list.append(F)
-    
-    # Average the results
-    f = np.mean(F_list, axis=0)
-    '''
     try:
+        n = X.shape[0]
+        F_list = []
         
-        f = np.linalg.solve(X_T,C_T)       
+        for _ in range(100):
+            # Introduce small random fluctuations to C
+            C_fluctuated = C + np.random.uniform(-fluctuation, fluctuation, size=C.shape)
+            
+            # QR decomposition
+            Q, R = qr(X)
+            
+            # Solve R*F = Q^T*C_fluctuated
+            QTC = np.dot(Q.T, C_fluctuated)
+            F = solve_triangular(R, QTC)
+            F_list.append(F)
+        
+        # Average the results
+        f = np.mean(F_list, axis=0)   
     
     except:
         
         f = gmres(X_T,C_T, tol=1e-12)[0]
-    '''
     
     f = f/np.sum(f) # normalize f
     
