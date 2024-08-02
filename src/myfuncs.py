@@ -913,6 +913,7 @@ def build_X(cells):
 
 
 from scipy.linalg import qr, solve_triangular
+from scipy.sparse.linalg import gmres
 
 def calc_f(X,C):
     
